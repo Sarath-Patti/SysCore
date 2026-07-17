@@ -4,9 +4,9 @@ SysCore is a modular, production-quality systems programming framework.
 
 ## Project Structure
 
-- `include/`: Public headers (e.g., `include/common/`, `include/process/`).
-- `src/`: Source files (e.g., `src/common/`, `src/process/`).
-- `examples/`: Example usage and demos (e.g., `examples/process/`).
+- `include/`: Public headers (e.g., `include/common/`, `include/process/`, `include/ipc/`).
+- `src/`: Source files (e.g., `src/common/`, `src/process/`, `src/ipc/`).
+- `examples/`: Example usage and demos (e.g., `examples/process/`, `examples/ipc/`).
 - `tests/`: Unit and integration tests.
 - `benchmarks/`: Performance benchmarks.
 - `docs/`: Design and API documentation.
@@ -14,7 +14,7 @@ SysCore is a modular, production-quality systems programming framework.
 
 ## Version
 
-Current version: 0.3.0 (Milestone: v0.3 – Process Management)
+Current version: 0.4.0 (Milestone: v0.4 – Pipes & IPC)
 
 ## Capabilities
 
@@ -29,6 +29,11 @@ Current version: 0.3.0 (Milestone: v0.3 – Process Management)
    - Wrapper for program execution (`syscore_process_exec`).
    - Wrapper for waiting child status (`syscore_process_wait`).
    - Helper to retrieve current and parent PID (`syscore_process_get_pid`, `syscore_process_get_ppid`).
+3. **Pipes & IPC**
+   - Lightweight POSIX-compliant IPC module.
+   - Anonymous pipe creation (`syscore_ipc_pipe_create`) and handle closure (`syscore_ipc_close`).
+   - Named FIFO creation (`syscore_ipc_fifo_create`) and opening (`syscore_ipc_fifo_open`).
+   - Reusable read/write handlers (`syscore_ipc_read`, `syscore_ipc_write`).
 
 ## Building
 
@@ -42,13 +47,20 @@ cmake --build .
 
 ## Running the Demos
 
-After building, you can run the primary demo or process examples:
+After building, you can run the primary demo, process examples, or IPC examples:
 
 ```bash
 # Main Infrastructure Demo
 ./syscore_demo
 
 # Process Management Demo
-./process_demo
+./basic_fork
+
+# IPC Anonymous Pipe Demo
+./anonymous_pipe_demo
+
+# IPC Named FIFO Demo
+./named_fifo_demo
 ```
+
 

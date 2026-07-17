@@ -42,10 +42,35 @@ target_include_directories(syscore_process PUBLIC
 
 target_link_libraries(syscore_process PUBLIC syscore_common)
 
-# Process demo executable target
-add_executable(process_demo
-    examples/process/process_demo.c
+# Process basic_fork executable target
+add_executable(basic_fork
+    examples/process/basic_fork.c
 )
 
-target_link_libraries(process_demo PRIVATE syscore_process)
+target_link_libraries(basic_fork PRIVATE syscore_process)
+
+# IPC library target
+add_library(syscore_ipc
+    src/ipc/ipc.c
+)
+
+target_include_directories(syscore_ipc PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+)
+
+target_link_libraries(syscore_ipc PUBLIC syscore_common)
+
+# IPC anonymous pipe demo target
+add_executable(anonymous_pipe_demo
+    examples/ipc/anonymous_pipe.c
+)
+
+target_link_libraries(anonymous_pipe_demo PRIVATE syscore_ipc syscore_process)
+
+# IPC named FIFO demo target
+add_executable(named_fifo_demo
+    examples/ipc/named_fifo.c
+)
+
+target_link_libraries(named_fifo_demo PRIVATE syscore_ipc syscore_process)
 
