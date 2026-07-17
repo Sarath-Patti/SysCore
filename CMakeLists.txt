@@ -16,6 +16,8 @@ endif()
 # Common library target
 add_library(syscore_common
     src/common/version.c
+    src/common/logging.c
+    src/common/errors.c
 )
 
 target_include_directories(syscore_common PUBLIC
