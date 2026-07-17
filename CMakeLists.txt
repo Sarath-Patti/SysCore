@@ -30,3 +30,22 @@ add_executable(syscore_demo
 )
 
 target_link_libraries(syscore_demo PRIVATE syscore_common)
+
+# Process library target
+add_library(syscore_process
+    src/process/process.c
+)
+
+target_include_directories(syscore_process PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+)
+
+target_link_libraries(syscore_process PUBLIC syscore_common)
+
+# Process demo executable target
+add_executable(process_demo
+    examples/process/process_demo.c
+)
+
+target_link_libraries(process_demo PRIVATE syscore_process)
+

@@ -4,9 +4,9 @@ SysCore is a modular, production-quality systems programming framework.
 
 ## Project Structure
 
-- `include/`: Public headers (e.g., `include/common/`).
-- `src/`: Source files (e.g., `src/common/`).
-- `examples/`: Example usage and demos.
+- `include/`: Public headers (e.g., `include/common/`, `include/process/`).
+- `src/`: Source files (e.g., `src/common/`, `src/process/`).
+- `examples/`: Example usage and demos (e.g., `examples/process/`).
 - `tests/`: Unit and integration tests.
 - `benchmarks/`: Performance benchmarks.
 - `docs/`: Design and API documentation.
@@ -14,7 +14,21 @@ SysCore is a modular, production-quality systems programming framework.
 
 ## Version
 
-Current version: 0.1.0 (Milestone: v0.1 – Project Foundation)
+Current version: 0.3.0 (Milestone: v0.3 – Process Management)
+
+## Capabilities
+
+1. **Common Infrastructure**
+   - Centralized project configurations and versioning.
+   - Comprehensive OS and Compiler detection helpers.
+   - Lightweight logging system supporting levels `DEBUG`, `INFO`, `WARN`, `ERROR` with optional ANSI colors.
+   - Crash-free error handling system (`syscore_error_t` and `SYSCORE_RETURN_IF_ERROR`).
+2. **Process Management**
+   - Reusable process management interface using POSIX APIs.
+   - Wrapper for fork (`syscore_process_fork`).
+   - Wrapper for program execution (`syscore_process_exec`).
+   - Wrapper for waiting child status (`syscore_process_wait`).
+   - Helper to retrieve current and parent PID (`syscore_process_get_pid`, `syscore_process_get_ppid`).
 
 ## Building
 
@@ -26,10 +40,15 @@ cmake ..
 cmake --build .
 ```
 
-## Running the Demo
+## Running the Demos
 
-After building, execute the demo binary:
+After building, you can run the primary demo or process examples:
 
 ```bash
+# Main Infrastructure Demo
 ./syscore_demo
+
+# Process Management Demo
+./process_demo
 ```
+
