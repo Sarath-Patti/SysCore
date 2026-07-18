@@ -4,9 +4,9 @@ SysCore is a modular, production-quality systems programming framework.
 
 ## Project Structure
 
-- `include/`: Public headers (e.g., `include/common/`, `include/process/`, `include/ipc/`).
-- `src/`: Source files (e.g., `src/common/`, `src/process/`, `src/ipc/`).
-- `examples/`: Example usage and demos (e.g., `examples/process/`, `examples/ipc/`).
+- `include/`: Public headers (e.g., `include/common/`, `include/process/`, `include/ipc/`, `include/threading/`).
+- `src/`: Source files (e.g., `src/common/`, `src/process/`, `src/ipc/`, `src/threading/`).
+- `examples/`: Example usage and demos (e.g., `examples/process/`, `examples/ipc/`, `examples/threading/`).
 - `tests/`: Unit and integration tests.
 - `benchmarks/`: Performance benchmarks.
 - `docs/`: Design and API documentation.
@@ -14,7 +14,7 @@ SysCore is a modular, production-quality systems programming framework.
 
 ## Version
 
-Current version: 0.4.0 (Milestone: v0.4 – Pipes & IPC)
+Current version: 0.5.0 (Milestone: v0.5 – POSIX Threads)
 
 ## Capabilities
 
@@ -34,6 +34,12 @@ Current version: 0.4.0 (Milestone: v0.4 – Pipes & IPC)
    - Anonymous pipe creation (`syscore_ipc_pipe_create`) and handle closure (`syscore_ipc_close`).
    - Named FIFO creation (`syscore_ipc_fifo_create`) and opening (`syscore_ipc_fifo_open`).
    - Reusable read/write handlers (`syscore_ipc_read`, `syscore_ipc_write`).
+4. **POSIX Threads**
+   - Reusable POSIX threading module.
+   - Thread creation (`syscore_thread_create`) and joining (`syscore_thread_join`).
+   - Retrieve current thread (`syscore_thread_self`).
+   - Precise millisecond sleep helpers (`syscore_thread_sleep_ms`).
+   - Thread stack and detach attribute customization support (`syscore_thread_attr_t`).
 
 ## Building
 
@@ -47,7 +53,7 @@ cmake --build .
 
 ## Running the Demos
 
-After building, you can run the primary demo, process examples, or IPC examples:
+After building, you can run the primary demo, process examples, IPC examples, or threading examples:
 
 ```bash
 # Main Infrastructure Demo
@@ -61,6 +67,12 @@ After building, you can run the primary demo, process examples, or IPC examples:
 
 # IPC Named FIFO Demo
 ./named_fifo_demo
+
+# POSIX Threads Demos
+./basic_thread
+./thread_arguments
+./multiple_threads
 ```
+
 
 

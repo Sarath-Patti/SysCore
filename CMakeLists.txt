@@ -74,3 +74,34 @@ add_executable(named_fifo_demo
 
 target_link_libraries(named_fifo_demo PRIVATE syscore_ipc syscore_process)
 
+# Find POSIX threads package
+find_package(Threads REQUIRED)
+
+# Threading library target
+add_library(syscore_threading
+    src/threading/threading.c
+)
+
+target_include_directories(syscore_threading PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+)
+
+target_link_libraries(syscore_threading PUBLIC syscore_common Threads::Threads)
+
+# Threading examples
+add_executable(basic_thread
+    examples/threading/basic_thread.c
+)
+target_link_libraries(basic_thread PRIVATE syscore_threading)
+
+add_executable(thread_arguments
+    examples/threading/thread_arguments.c
+)
+target_link_libraries(thread_arguments PRIVATE syscore_threading)
+
+add_executable(multiple_threads
+    examples/threading/multiple_threads.c
+)
+target_link_libraries(multiple_threads PRIVATE syscore_threading)
+
+
