@@ -4,9 +4,9 @@ SysCore is a modular, production-quality systems programming framework.
 
 ## Project Structure
 
-- `include/`: Public headers (e.g., `include/common/`, `include/process/`, `include/ipc/`, `include/threading/`, `include/sync/`).
-- `src/`: Source files (e.g., `src/common/`, `src/process/`, `src/ipc/`, `src/threading/`, `src/sync/`).
-- `examples/`: Example usage and demos (e.g., `examples/process/`, `examples/ipc/`, `examples/threading/`, `examples/sync/`).
+- `include/`: Public headers (e.g., `include/common/`, `include/process/`, `include/ipc/`, `include/threading/`, `include/sync/`, `include/memory/`).
+- `src/`: Source files (e.g., `src/common/`, `src/process/`, `src/ipc/`, `src/threading/`, `src/sync/`, `src/memory/`).
+- `examples/`: Example usage and demos (e.g., `examples/process/`, `examples/ipc/`, `examples/threading/`, `examples/sync/`, `examples/memory/`).
 - `tests/`: Unit and integration tests.
 - `benchmarks/`: Performance benchmarks.
 - `docs/`: Design and API documentation.
@@ -14,7 +14,7 @@ SysCore is a modular, production-quality systems programming framework.
 
 ## Version
 
-Current version: 0.6.0 (Milestone: v0.6 – Synchronization)
+Current version: 0.7.0 (Milestone: v0.7 – Shared Memory & Semaphores)
 
 ## Capabilities
 
@@ -44,6 +44,9 @@ Current version: 0.6.0 (Milestone: v0.6 – Synchronization)
    - POSIX mutex wrappers (`syscore_mutex_t`) for mutual exclusion.
    - POSIX condition variables (`syscore_cond_t`) for thread coordination.
    - POSIX read-write locks (`syscore_rwlock_t`) for multiple readers/single writer concurrency.
+6. **Shared Memory & Semaphores**
+   - POSIX Shared Memory management (`shm_open`, `shm_unlink`, `ftruncate`, `mmap`, `munmap`, `close`).
+   - POSIX Semaphores wrapper supporting unnamed (`sem_init`, `sem_destroy`) and named (`sem_open`, `sem_close`, `sem_unlink`) semaphores.
 
 ## Building
 
@@ -57,7 +60,7 @@ cmake --build .
 
 ## Running the Demos
 
-After building, you can run the primary demo, process examples, IPC examples, threading examples, or synchronization examples:
+After building, you can run the primary demo, process examples, IPC examples, threading examples, synchronization examples, or memory/semaphore examples:
 
 ```bash
 # Main Infrastructure Demo
@@ -82,7 +85,14 @@ After building, you can run the primary demo, process examples, IPC examples, th
 ./producer_consumer
 ./read_write_lock
 ./condition_variable
+
+# Shared Memory & Semaphores Demos
+./shared_memory_demo
+./semaphore_demo
+./named_semaphore_demo
+./shared_counter
 ```
+
 
 
 

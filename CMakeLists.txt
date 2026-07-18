@@ -136,5 +136,55 @@ add_executable(condition_variable
 )
 target_link_libraries(condition_variable PRIVATE syscore_sync syscore_threading)
 
+# Shared Memory library target
+add_library(syscore_memory
+    src/memory/shared_memory.c
+)
+
+target_include_directories(syscore_memory PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+)
+
+target_link_libraries(syscore_memory PUBLIC syscore_common)
+
+# Check and link real-time library (rt) if available
+find_library(RT_LIBRARY rt)
+if(RT_LIBRARY)
+    target_link_libraries(syscore_memory PUBLIC ${RT_LIBRARY})
+endif()
+
+# Semaphore library target
+add_library(syscore_semaphore
+    src/sync/semaphore.c
+)
+
+target_include_directories(syscore_semaphore PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+)
+
+target_link_libraries(syscore_semaphore PUBLIC syscore_common Threads::Threads)
+
+# Shared Memory & Semaphore examples
+add_executable(shared_memory_demo
+    examples/memory/shared_memory_demo.c
+)
+target_link_libraries(shared_memory_demo PRIVATE syscore_memory syscore_process)
+
+add_executable(semaphore_demo
+    examples/sync/semaphore_demo.c
+)
+target_link_libraries(semaphore_demo PRIVATE syscore_semaphore syscore_threading)
+
+add_executable(named_semaphore_demo
+    examples/sync/named_semaphore_demo.c
+)
+target_link_libraries(named_semaphore_demo PRIVATE syscore_semaphore syscore_process)
+
+add_executable(shared_counter
+    examples/memory/shared_counter.c
+)
+target_link_libraries(shared_counter PRIVATE syscore_memory syscore_semaphore syscore_process)
+
+
 
 
