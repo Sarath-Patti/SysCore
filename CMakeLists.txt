@@ -104,4 +104,37 @@ add_executable(multiple_threads
 )
 target_link_libraries(multiple_threads PRIVATE syscore_threading)
 
+# Synchronization library target
+add_library(syscore_sync
+    src/sync/sync.c
+)
+
+target_include_directories(syscore_sync PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+)
+
+target_link_libraries(syscore_sync PUBLIC syscore_common Threads::Threads)
+
+# Synchronization examples
+add_executable(mutex_demo
+    examples/sync/mutex_demo.c
+)
+target_link_libraries(mutex_demo PRIVATE syscore_sync syscore_threading)
+
+add_executable(producer_consumer
+    examples/sync/producer_consumer.c
+)
+target_link_libraries(producer_consumer PRIVATE syscore_sync syscore_threading)
+
+add_executable(read_write_lock
+    examples/sync/read_write_lock.c
+)
+target_link_libraries(read_write_lock PRIVATE syscore_sync syscore_threading)
+
+add_executable(condition_variable
+    examples/sync/condition_variable.c
+)
+target_link_libraries(condition_variable PRIVATE syscore_sync syscore_threading)
+
+
 

@@ -4,9 +4,9 @@ SysCore is a modular, production-quality systems programming framework.
 
 ## Project Structure
 
-- `include/`: Public headers (e.g., `include/common/`, `include/process/`, `include/ipc/`, `include/threading/`).
-- `src/`: Source files (e.g., `src/common/`, `src/process/`, `src/ipc/`, `src/threading/`).
-- `examples/`: Example usage and demos (e.g., `examples/process/`, `examples/ipc/`, `examples/threading/`).
+- `include/`: Public headers (e.g., `include/common/`, `include/process/`, `include/ipc/`, `include/threading/`, `include/sync/`).
+- `src/`: Source files (e.g., `src/common/`, `src/process/`, `src/ipc/`, `src/threading/`, `src/sync/`).
+- `examples/`: Example usage and demos (e.g., `examples/process/`, `examples/ipc/`, `examples/threading/`, `examples/sync/`).
 - `tests/`: Unit and integration tests.
 - `benchmarks/`: Performance benchmarks.
 - `docs/`: Design and API documentation.
@@ -14,7 +14,7 @@ SysCore is a modular, production-quality systems programming framework.
 
 ## Version
 
-Current version: 0.5.0 (Milestone: v0.5 – POSIX Threads)
+Current version: 0.6.0 (Milestone: v0.6 – Synchronization)
 
 ## Capabilities
 
@@ -40,6 +40,10 @@ Current version: 0.5.0 (Milestone: v0.5 – POSIX Threads)
    - Retrieve current thread (`syscore_thread_self`).
    - Precise millisecond sleep helpers (`syscore_thread_sleep_ms`).
    - Thread stack and detach attribute customization support (`syscore_thread_attr_t`).
+5. **Synchronization**
+   - POSIX mutex wrappers (`syscore_mutex_t`) for mutual exclusion.
+   - POSIX condition variables (`syscore_cond_t`) for thread coordination.
+   - POSIX read-write locks (`syscore_rwlock_t`) for multiple readers/single writer concurrency.
 
 ## Building
 
@@ -53,7 +57,7 @@ cmake --build .
 
 ## Running the Demos
 
-After building, you can run the primary demo, process examples, IPC examples, or threading examples:
+After building, you can run the primary demo, process examples, IPC examples, threading examples, or synchronization examples:
 
 ```bash
 # Main Infrastructure Demo
@@ -72,7 +76,14 @@ After building, you can run the primary demo, process examples, IPC examples, or
 ./basic_thread
 ./thread_arguments
 ./multiple_threads
+
+# Synchronization Demos
+./mutex_demo
+./producer_consumer
+./read_write_lock
+./condition_variable
 ```
+
 
 
 
