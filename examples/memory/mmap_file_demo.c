@@ -29,7 +29,13 @@ int main(void) {
   }
 
   const char *msg = "Initial File Data";
-  write(fd, msg, strlen(msg));
+  ssize_t bytes_written = write(fd, msg, strlen(msg));
+  if (bytes_written < 0) {
+    SYSCORE_LOG_ERROR("Failed to write initial data to file");
+    close(fd);
+    unlink(FILE_NAME);
+    return 1;
+  }
 
   // Map file
   void *addr = NULL;
@@ -66,8 +72,13 @@ int main(void) {
   if (fd >= 0) {
     char buffer[64];
     memset(buffer, 0, sizeof(buffer));
-    read(fd, buffer, sizeof(buffer) - 1);
-    SYSCORE_LOG_INFO("File content read from disk after msync: \"%s\"", buffer);
+    ssize_t bytes_read = read(fd, buffer, sizeof(buffer) - 1);
+    if (bytes_read >= 0) {
+      buffer[bytes_read] = '\0';
+      SYSCORE_LOG_INFO("File content read from disk after msync: \"%s\"", buffer);
+    } else {
+      SYSCORE_LOG_ERROR("Failed to read back file content from disk");
+    }
     close(fd);
   }
 
