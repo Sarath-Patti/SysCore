@@ -13,6 +13,11 @@ else()
     add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 endif()
 
+# Define POSIX feature test macros on Linux to expose POSIX APIs (e.g. nanosleep)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    add_compile_definitions(_POSIX_C_SOURCE=200809L)
+endif()
+
 # Common library target
 add_library(syscore_common
     src/common/version.c
