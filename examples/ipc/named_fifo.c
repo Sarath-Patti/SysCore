@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/wait.h>
+#include <time.h>
 #include <unistd.h>
 
 #define FIFO_PATH "/tmp/syscore_demo_fifo"
@@ -59,7 +60,8 @@ int main(void) {
         syscore_ipc_handle_t fifo_write = SYSCORE_IPC_INVALID_HANDLE;
         
         // Wait a brief moment to let child attempt to open first
-        usleep(100000); // 100ms
+        struct timespec ts = {.tv_sec = 0, .tv_nsec = 100000000};
+        nanosleep(&ts, NULL);
 
         SYSCORE_LOG_INFO("[Parent] Opening FIFO for writing...");
         syscore_error_t open_err = syscore_ipc_fifo_open(FIFO_PATH, 1, &fifo_write);
