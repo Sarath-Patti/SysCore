@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(SysCore VERSION 0.1.0 LANGUAGES C)
+project(SysCore VERSION 1.0.0 LANGUAGES C)
 
 # Use C17 standard
 set(CMAKE_C_STANDARD 17)
@@ -242,6 +242,117 @@ add_executable(mmap_shared_demo
     examples/memory/mmap_shared_demo.c
 )
 target_link_libraries(mmap_shared_demo PRIVATE syscore_mmap syscore_process)
+
+# List of all library targets for installation
+set(SYSCORE_LIBS
+    syscore_common
+    syscore_process
+    syscore_ipc
+    syscore_threading
+    syscore_sync
+    syscore_memory
+    syscore_semaphore
+    syscore_mq
+    syscore_mmap
+)
+
+# Apply INSTALL_INTERFACE to all library targets
+foreach(lib IN LISTS SYSCORE_LIBS)
+    target_include_directories(${lib} PUBLIC
+        $<INSTALL_INTERFACE:include>
+    )
+endforeach()
+
+# Install libraries and headers
+install(TARGETS ${SYSCORE_LIBS}
+    EXPORT SysCoreTargets
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin
+)
+
+install(DIRECTORY include/ DESTINATION include)
+
+# Export targets file
+install(EXPORT SysCoreTargets
+    FILE SysCoreTargets.cmake
+    NAMESPACE SysCore::
+    DESTINATION lib/cmake/SysCore
+)
+
+# Generate and install package version & config files
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/SysCoreConfigVersion.cmake"
+    VERSION 1.0.0
+    COMPATIBILITY AnyNewerVersion
+)
+
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/SysCoreConfig.cmake"
+"include(CMakeFindDependencyMacro)
+include(CMakeFindFrameworks OPTIONAL)
+include(\"\${CMAKE_CURRENT_LIST_DIR}/SysCoreTargets.cmake\")
+"
+)
+
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/SysCoreConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/SysCoreConfigVersion.cmake"
+    DESTINATION lib/cmake/SysCore
+)
+
+# Enable CTest Automated Testing
+enable_testing()
+
+add_executable(test_common tests/test_common.c)
+target_link_libraries(test_common PRIVATE syscore_common)
+add_test(NAME test_common COMMAND test_common)
+
+add_executable(test_process tests/test_process.c)
+target_link_libraries(test_process PRIVATE syscore_process)
+add_test(NAME test_process COMMAND test_process)
+
+add_executable(test_ipc tests/test_ipc.c)
+target_link_libraries(test_ipc PRIVATE syscore_ipc)
+add_test(NAME test_ipc COMMAND test_ipc)
+
+add_executable(test_threading tests/test_threading.c)
+target_link_libraries(test_threading PRIVATE syscore_threading)
+add_test(NAME test_threading COMMAND test_threading)
+
+add_executable(test_sync tests/test_sync.c)
+target_link_libraries(test_sync PRIVATE syscore_sync)
+add_test(NAME test_sync COMMAND test_sync)
+
+add_executable(test_memory tests/test_memory.c)
+target_link_libraries(test_memory PRIVATE syscore_memory)
+add_test(NAME test_memory COMMAND test_memory)
+
+add_executable(test_semaphore tests/test_semaphore.c)
+target_link_libraries(test_semaphore PRIVATE syscore_semaphore syscore_threading)
+add_test(NAME test_semaphore COMMAND test_semaphore)
+
+add_executable(test_mq tests/test_mq.c)
+target_link_libraries(test_mq PRIVATE syscore_mq)
+add_test(NAME test_mq COMMAND test_mq)
+
+add_executable(test_mmap tests/test_mmap.c)
+target_link_libraries(test_mmap PRIVATE syscore_mmap)
+add_test(NAME test_mmap COMMAND test_mmap)
+
+# Latency Benchmarks
+add_executable(thread_latency benchmarks/thread_latency.c)
+target_link_libraries(thread_latency PRIVATE syscore_threading)
+
+add_executable(pipe_latency benchmarks/pipe_latency.c)
+target_link_libraries(pipe_latency PRIVATE syscore_ipc)
+
+add_executable(semaphore_latency benchmarks/semaphore_latency.c)
+target_link_libraries(semaphore_latency PRIVATE syscore_semaphore)
+
+add_executable(mmap_latency benchmarks/mmap_latency.c)
+target_link_libraries(mmap_latency PRIVATE syscore_mmap)
+
 
 
 

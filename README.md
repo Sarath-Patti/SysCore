@@ -14,7 +14,7 @@ SysCore is a modular, production-quality systems programming framework.
 
 ## Version
 
-Current version: 0.9.0 (Milestone: v0.9 – Memory Mapping)
+Current version: 1.0.0 (Milestone: v0.9 – Memory Mapping)
 
 ## Capabilities
 
