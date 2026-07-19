@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/wait.h>
+#include <time.h>
 #include <unistd.h>
 
 #define MQ_NAME "/syscore_mq_demo"
@@ -57,7 +58,8 @@ int main(void) {
     size_t read_bytes = 0;
 
     // Sleep briefly to let child send first
-    usleep(100000);
+    struct timespec ts = {.tv_sec = 0, .tv_nsec = 100000000};
+    nanosleep(&ts, NULL);
 
     SYSCORE_LOG_INFO("[Parent] Receiving message from queue...");
     err = syscore_mq_receive(mq, buffer, sizeof(buffer), &prio, &read_bytes);

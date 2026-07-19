@@ -6,6 +6,7 @@
 #include "sync/semaphore.h"
 #include <stdio.h>
 #include <sys/wait.h>
+#include <time.h>
 #include <unistd.h>
 
 #define SHM_NAME "/syscore_shm_counter"
@@ -72,7 +73,8 @@ int main(void) {
       state->counter++;
       SYSCORE_LOG_INFO("[Child] Incremented counter to: %d", state->counter);
       syscore_sem_post(&state->sem);
-      usleep(50000); // 50ms
+      struct timespec ts = {.tv_sec = 0, .tv_nsec = 50000000};
+      nanosleep(&ts, NULL);
     }
     syscore_shm_unmap(state, sizeof(shared_state_t));
     return 0;
@@ -83,7 +85,8 @@ int main(void) {
       state->counter++;
       SYSCORE_LOG_INFO("[Parent] Incremented counter to: %d", state->counter);
       syscore_sem_post(&state->sem);
-      usleep(80000); // 80ms
+      struct timespec ts = {.tv_sec = 0, .tv_nsec = 80000000};
+      nanosleep(&ts, NULL);
     }
 
     // Wait for child

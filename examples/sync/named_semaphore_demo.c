@@ -5,6 +5,7 @@
 #include "sync/semaphore.h"
 #include <stdio.h>
 #include <sys/wait.h>
+#include <time.h>
 #include <unistd.h>
 
 #define SEM_NAME "/syscore_sem_demo"
@@ -46,7 +47,8 @@ int main(void) {
   } else {
     // Parent process sleeps, then posts
     SYSCORE_LOG_INFO("[Parent] Doing work...");
-    usleep(500000); // 500ms
+    struct timespec ts = {.tv_sec = 0, .tv_nsec = 500000000};
+    nanosleep(&ts, NULL);
 
     SYSCORE_LOG_INFO("[Parent] Signaling child via named semaphore...");
     syscore_sem_post(&sem);

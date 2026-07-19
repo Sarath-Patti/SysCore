@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/wait.h>
+#include <time.h>
 #include <unistd.h>
 
 #define MQ_NAME "/syscore_mq_prod_cons"
@@ -46,7 +47,8 @@ int main(void) {
       snprintf(item_buf, sizeof(item_buf), "Item %d", i + 1);
       SYSCORE_LOG_INFO("[Producer] Producing item: %s", item_buf);
       syscore_mq_send(mq, item_buf, strlen(item_buf) + 1, 1);
-      usleep(100000); // Sleep 100ms
+      struct timespec ts = {.tv_sec = 0, .tv_nsec = 100000000};
+      nanosleep(&ts, NULL);
     }
     syscore_mq_close(mq);
     return 0;
@@ -60,7 +62,8 @@ int main(void) {
       SYSCORE_LOG_INFO("[Consumer] Waiting for item...");
       syscore_mq_receive(mq, item_buf, sizeof(item_buf), &prio, &read_bytes);
       SYSCORE_LOG_INFO("[Consumer] Consumed item: %s", item_buf);
-      usleep(150000); // Sleep 150ms (slower consumer)
+      struct timespec ts = {.tv_sec = 0, .tv_nsec = 150000000};
+      nanosleep(&ts, NULL);
     }
 
     int status = 0;

@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/wait.h>
+#include <time.h>
 #include <unistd.h>
 
 #define SHM_NAME "/syscore_shm_demo"
@@ -54,7 +55,8 @@ int main(void) {
     }
 
     // Wait a bit for parent to write
-    usleep(100000); // 100ms
+    struct timespec ts = {.tv_sec = 0, .tv_nsec = 100000000};
+    nanosleep(&ts, NULL);
 
     SYSCORE_LOG_INFO("[Child] Read message from shared memory: \"%s\"",
                      (char *)addr);
