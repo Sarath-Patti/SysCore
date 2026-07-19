@@ -14,7 +14,7 @@ SysCore is a modular, production-quality systems programming framework.
 
 ## Version
 
-Current version: 0.7.0 (Milestone: v0.7 – Shared Memory & Semaphores)
+Current version: 0.8.0 (Milestone: v0.8 – POSIX Message Queues)
 
 ## Capabilities
 
@@ -47,6 +47,9 @@ Current version: 0.7.0 (Milestone: v0.7 – Shared Memory & Semaphores)
 6. **Shared Memory & Semaphores**
    - POSIX Shared Memory management (`shm_open`, `shm_unlink`, `ftruncate`, `mmap`, `munmap`, `close`).
    - POSIX Semaphores wrapper supporting unnamed (`sem_init`, `sem_destroy`) and named (`sem_open`, `sem_close`, `sem_unlink`) semaphores.
+7. **POSIX Message Queues**
+   - POSIX Message Queue wrappers (`mq_open`, `mq_close`, `mq_unlink`, `mq_send`, `mq_receive`, `mq_getattr`, `mq_setattr`).
+   - macOS compatibility emulation using shared memory and semaphores.
 
 ## Building
 
@@ -60,7 +63,7 @@ cmake --build .
 
 ## Running the Demos
 
-After building, you can run the primary demo, process examples, IPC examples, threading examples, synchronization examples, or memory/semaphore examples:
+After building, you can run the primary demo, process examples, IPC examples, threading examples, synchronization examples, memory/semaphore examples, or message queue examples:
 
 ```bash
 # Main Infrastructure Demo
@@ -91,7 +94,13 @@ After building, you can run the primary demo, process examples, IPC examples, th
 ./semaphore_demo
 ./named_semaphore_demo
 ./shared_counter
+
+# POSIX Message Queue Demos
+./message_queue_demo
+./message_queue_priority
+./producer_consumer_mq
 ```
+
 
 
 

@@ -185,6 +185,38 @@ add_executable(shared_counter
 )
 target_link_libraries(shared_counter PRIVATE syscore_memory syscore_semaphore syscore_process)
 
+# Message Queue library target
+add_library(syscore_mq
+    src/ipc/message_queue.c
+)
+
+target_include_directories(syscore_mq PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+)
+
+target_link_libraries(syscore_mq PUBLIC syscore_common syscore_memory syscore_semaphore)
+
+if(RT_LIBRARY)
+    target_link_libraries(syscore_mq PUBLIC ${RT_LIBRARY})
+endif()
+
+# Message Queue examples
+add_executable(message_queue_demo
+    examples/ipc/message_queue_demo.c
+)
+target_link_libraries(message_queue_demo PRIVATE syscore_mq syscore_process)
+
+add_executable(message_queue_priority
+    examples/ipc/message_queue_priority.c
+)
+target_link_libraries(message_queue_priority PRIVATE syscore_mq)
+
+add_executable(producer_consumer_mq
+    examples/ipc/producer_consumer_mq.c
+)
+target_link_libraries(producer_consumer_mq PRIVATE syscore_mq syscore_process)
+
+
 
 
 
