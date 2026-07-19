@@ -14,7 +14,7 @@ SysCore is a modular, production-quality systems programming framework.
 
 ## Version
 
-Current version: 0.8.0 (Milestone: v0.8 – POSIX Message Queues)
+Current version: 0.9.0 (Milestone: v0.9 – Memory Mapping)
 
 ## Capabilities
 
@@ -49,7 +49,10 @@ Current version: 0.8.0 (Milestone: v0.8 – POSIX Message Queues)
    - POSIX Semaphores wrapper supporting unnamed (`sem_init`, `sem_destroy`) and named (`sem_open`, `sem_close`, `sem_unlink`) semaphores.
 7. **POSIX Message Queues**
    - POSIX Message Queue wrappers (`mq_open`, `mq_close`, `mq_unlink`, `mq_send`, `mq_receive`, `mq_getattr`, `mq_setattr`).
-   - macOS compatibility emulation using shared memory and semaphores.
+   - macOS compatibility emulation using shared memory and semaphores while preserving the exact same public API.
+8. **Memory Mapping**
+   - POSIX memory mapping wrappers (`mmap`, `munmap`, `msync`, `mprotect`).
+   - Supports anonymous, file-backed, read-only, read-write, executable (API-only), shared, and private memory mappings.
 
 ## Building
 
@@ -63,7 +66,7 @@ cmake --build .
 
 ## Running the Demos
 
-After building, you can run the primary demo, process examples, IPC examples, threading examples, synchronization examples, memory/semaphore examples, or message queue examples:
+After building, you can run the primary demo, process examples, IPC examples, threading examples, synchronization examples, memory/semaphore examples, message queue examples, or memory mapping examples:
 
 ```bash
 # Main Infrastructure Demo
@@ -99,6 +102,11 @@ After building, you can run the primary demo, process examples, IPC examples, th
 ./message_queue_demo
 ./message_queue_priority
 ./producer_consumer_mq
+
+# Memory Mapping Demos
+./mmap_anonymous_demo
+./mmap_file_demo
+./mmap_shared_demo
 ```
 
 

@@ -216,6 +216,34 @@ add_executable(producer_consumer_mq
 )
 target_link_libraries(producer_consumer_mq PRIVATE syscore_mq syscore_process)
 
+# Memory Mapping library target
+add_library(syscore_mmap
+    src/memory/mmap.c
+)
+
+target_include_directories(syscore_mmap PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+)
+
+target_link_libraries(syscore_mmap PUBLIC syscore_common)
+
+# Memory Mapping examples
+add_executable(mmap_anonymous_demo
+    examples/memory/mmap_anonymous_demo.c
+)
+target_link_libraries(mmap_anonymous_demo PRIVATE syscore_mmap)
+
+add_executable(mmap_file_demo
+    examples/memory/mmap_file_demo.c
+)
+target_link_libraries(mmap_file_demo PRIVATE syscore_mmap)
+
+add_executable(mmap_shared_demo
+    examples/memory/mmap_shared_demo.c
+)
+target_link_libraries(mmap_shared_demo PRIVATE syscore_mmap syscore_process)
+
+
 
 
 
