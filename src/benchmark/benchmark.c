@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/resource.h>
 #include <time.h>
 
 static int compare_doubles(const void *a, const void *b) {
@@ -112,6 +113,9 @@ void syscore_benchmark_print_result(const syscore_benchmark_result_t *res) {
   printf("  p99 Latency        : %s\n", p99_str);
   printf("  Max Latency        : %s\n", max_str);
   printf("  Std Deviation      : %s\n", stddev_str);
+  printf("  User CPU Time      : %.6f s\n", res->user_cpu_sec);
+  printf("  System CPU Time    : %.6f s\n", res->sys_cpu_sec);
+  printf("  Total CPU Time     : %.6f s\n", res->total_cpu_sec);
   printf("================================================================================\n\n");
 }
 
@@ -156,6 +160,9 @@ syscore_error_t syscore_benchmark_run(const syscore_benchmark_config_t *config,
   }
 
   /* Measurement Phase */
+  struct rusage ru_start, ru_end;
+  int ru_ok = (getrusage(RUSAGE_SELF, &ru_start) == 0);
+
   uint64_t total_start = get_monotonic_time_ns();
 
   for (size_t i = 0; i < measured_iterations; i++) {
@@ -174,6 +181,20 @@ syscore_error_t syscore_benchmark_run(const syscore_benchmark_config_t *config,
   }
 
   uint64_t total_end = get_monotonic_time_ns();
+
+  if (ru_ok) {
+    ru_ok = (getrusage(RUSAGE_SELF, &ru_end) == 0);
+  }
+  double user_cpu = 0.0;
+  double sys_cpu = 0.0;
+  if (ru_ok) {
+    user_cpu = (double)(ru_end.ru_utime.tv_sec - ru_start.ru_utime.tv_sec) +
+               (double)(ru_end.ru_utime.tv_usec - ru_start.ru_utime.tv_usec) / 1e6;
+    sys_cpu = (double)(ru_end.ru_stime.tv_sec - ru_start.ru_stime.tv_sec) +
+              (double)(ru_end.ru_stime.tv_usec - ru_start.ru_stime.tv_usec) / 1e6;
+    if (user_cpu < 0.0) user_cpu = 0.0;
+    if (sys_cpu < 0.0) sys_cpu = 0.0;
+  }
 
   double total_elapsed_sec = (double)(total_end - total_start) / 1e9;
   if (total_elapsed_sec <= 0.0) {
@@ -227,6 +248,9 @@ syscore_error_t syscore_benchmark_run(const syscore_benchmark_config_t *config,
   res.p99_latency_ns = p99_val;
   res.stddev_latency_ns = stddev;
   res.throughput_ops_sec = throughput;
+  res.user_cpu_sec = user_cpu;
+  res.sys_cpu_sec = sys_cpu;
+  res.total_cpu_sec = user_cpu + sys_cpu;
 
   syscore_benchmark_print_result(&res);
 
@@ -269,14 +293,18 @@ syscore_error_t syscore_benchmark_export_json(const syscore_benchmark_result_t *
             "    \"p95_latency_ns\": %.2f,\n"
             "    \"p99_latency_ns\": %.2f,\n"
             "    \"stddev_latency_ns\": %.2f,\n"
-            "    \"throughput_ops_sec\": %.2f\n"
+            "    \"throughput_ops_sec\": %.2f,\n"
+            "    \"user_cpu_sec\": %.6f,\n"
+            "    \"sys_cpu_sec\": %.6f,\n"
+            "    \"total_cpu_sec\": %.6f\n"
             "  }\n"
             "]\n",
             res->name ? res->name : "Unnamed", res->warmup_iterations,
             res->measured_iterations, res->total_elapsed_sec,
             res->avg_latency_ns, res->min_latency_ns, res->max_latency_ns,
             res->p50_latency_ns, res->p95_latency_ns, res->p99_latency_ns,
-            res->stddev_latency_ns, res->throughput_ops_sec);
+            res->stddev_latency_ns, res->throughput_ops_sec,
+            res->user_cpu_sec, res->sys_cpu_sec, res->total_cpu_sec);
     fclose(fp);
     return SYSCORE_SUCCESS;
   }
@@ -301,14 +329,18 @@ syscore_error_t syscore_benchmark_export_json(const syscore_benchmark_result_t *
             "    \"p95_latency_ns\": %.2f,\n"
             "    \"p99_latency_ns\": %.2f,\n"
             "    \"stddev_latency_ns\": %.2f,\n"
-            "    \"throughput_ops_sec\": %.2f\n"
+            "    \"throughput_ops_sec\": %.2f,\n"
+            "    \"user_cpu_sec\": %.6f,\n"
+            "    \"sys_cpu_sec\": %.6f,\n"
+            "    \"total_cpu_sec\": %.6f\n"
             "  }\n"
             "]\n",
             res->name ? res->name : "Unnamed", res->warmup_iterations,
             res->measured_iterations, res->total_elapsed_sec,
             res->avg_latency_ns, res->min_latency_ns, res->max_latency_ns,
             res->p50_latency_ns, res->p95_latency_ns, res->p99_latency_ns,
-            res->stddev_latency_ns, res->throughput_ops_sec);
+            res->stddev_latency_ns, res->throughput_ops_sec,
+            res->user_cpu_sec, res->sys_cpu_sec, res->total_cpu_sec);
     fclose(fp);
     return SYSCORE_SUCCESS;
   }
@@ -343,14 +375,18 @@ syscore_error_t syscore_benchmark_export_json(const syscore_benchmark_result_t *
             "    \"p95_latency_ns\": %.2f,\n"
             "    \"p99_latency_ns\": %.2f,\n"
             "    \"stddev_latency_ns\": %.2f,\n"
-            "    \"throughput_ops_sec\": %.2f\n"
+            "    \"throughput_ops_sec\": %.2f,\n"
+            "    \"user_cpu_sec\": %.6f,\n"
+            "    \"sys_cpu_sec\": %.6f,\n"
+            "    \"total_cpu_sec\": %.6f\n"
             "  }\n"
             "]\n",
             res->name ? res->name : "Unnamed", res->warmup_iterations,
             res->measured_iterations, res->total_elapsed_sec,
             res->avg_latency_ns, res->min_latency_ns, res->max_latency_ns,
             res->p50_latency_ns, res->p95_latency_ns, res->p99_latency_ns,
-            res->stddev_latency_ns, res->throughput_ops_sec);
+            res->stddev_latency_ns, res->throughput_ops_sec,
+            res->user_cpu_sec, res->sys_cpu_sec, res->total_cpu_sec);
     fclose(fp);
     return SYSCORE_SUCCESS;
   }
@@ -385,14 +421,18 @@ syscore_error_t syscore_benchmark_export_json(const syscore_benchmark_result_t *
           "    \"p95_latency_ns\": %.2f,\n"
           "    \"p99_latency_ns\": %.2f,\n"
           "    \"stddev_latency_ns\": %.2f,\n"
-          "    \"throughput_ops_sec\": %.2f\n"
+          "    \"throughput_ops_sec\": %.2f,\n"
+          "    \"user_cpu_sec\": %.6f,\n"
+          "    \"sys_cpu_sec\": %.6f,\n"
+          "    \"total_cpu_sec\": %.6f\n"
           "  }\n"
           "]\n",
           res->name ? res->name : "Unnamed", res->warmup_iterations,
           res->measured_iterations, res->total_elapsed_sec,
           res->avg_latency_ns, res->min_latency_ns, res->max_latency_ns,
           res->p50_latency_ns, res->p95_latency_ns, res->p99_latency_ns,
-          res->stddev_latency_ns, res->throughput_ops_sec);
+          res->stddev_latency_ns, res->throughput_ops_sec,
+          res->user_cpu_sec, res->sys_cpu_sec, res->total_cpu_sec);
 
   fclose(fp);
   return SYSCORE_SUCCESS;

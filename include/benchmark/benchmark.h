@@ -45,6 +45,9 @@ typedef struct {
   double p99_latency_ns;      /**< 99th percentile latency (nanoseconds) */
   double stddev_latency_ns;   /**< Sample standard deviation (nanoseconds) */
   double throughput_ops_sec;  /**< Operations executed per second */
+  double user_cpu_sec;        /**< Process user CPU time consumed (seconds) */
+  double sys_cpu_sec;         /**< Process system CPU time consumed (seconds) */
+  double total_cpu_sec;       /**< Total CPU time consumed (user + sys seconds) */
 } syscore_benchmark_result_t;
 
 /**

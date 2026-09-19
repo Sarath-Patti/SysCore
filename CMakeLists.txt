@@ -404,8 +404,16 @@ target_link_libraries(sync_semaphore_bench PRIVATE syscore_semaphore syscore_thr
 add_executable(sync_rwlock_bench benchmarks/sync_rwlock_bench.c)
 target_link_libraries(sync_rwlock_bench PRIVATE syscore_sync syscore_threading syscore_benchmark)
 
-add_executable(sync_condvar_bench benchmarks/sync_condvar_bench.c)
-target_link_libraries(sync_condvar_bench PRIVATE syscore_sync syscore_threading syscore_benchmark)
+# Phase 4 Performance Analysis Experiments
+add_executable(exp_ipc_comparison benchmarks/exp_ipc_comparison.c)
+target_link_libraries(exp_ipc_comparison PRIVATE syscore_ipc syscore_sync syscore_mq syscore_benchmark)
+
+add_executable(exp_sync_comparison benchmarks/exp_sync_comparison.c)
+target_link_libraries(exp_sync_comparison PRIVATE syscore_sync syscore_semaphore syscore_threading syscore_benchmark)
+
+add_executable(exp_baseline_vs_optimized benchmarks/exp_baseline_vs_optimized.c)
+target_link_libraries(exp_baseline_vs_optimized PRIVATE syscore_sync syscore_benchmark)
+
 
 
 

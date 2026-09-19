@@ -226,7 +226,28 @@ Run the complete benchmark suite and export machine-readable JSON results:
 python3 scripts/run_benchmarks.py --build-dir build --output build/results.json
 ```
 
+#### Phase 4 Performance Analysis & Comparative Experiments Suite
+Consolidated comparative experiments producing structured, machine-readable performance evidence:
+- `exp_ipc_comparison`: Direct consolidated IPC experiment comparing Pipe, Shared Memory, and POSIX Message Queue across payload sizes (64 B, 256 B, 1024 B).
+- `exp_sync_comparison`: Direct consolidated synchronization experiment comparing Mutex, Semaphore, Read-Write Lock, and Condition Variable across concurrency levels (1, 2, 4, 8 threads).
+- `exp_baseline_vs_optimized`: Controlled implementation optimization experiment measuring byte-by-byte unamortized locked memory transfer vs. block-amortized `memcpy` transfer under identical 4 KB workloads.
+
+### Running Comparative Experiments & Generating Analysis
+
+Run the Phase 4 comparative analysis pipeline to execute all experiment binaries and output structured JSON and CSV results:
+
+```bash
+python3 scripts/run_experiments.py
+```
+
+Generated result files in `build/`:
+- `build/experiments_results.json`: Complete JSON dataset including latency statistics (avg, min, max, p50, p95, p99, stddev), throughput (ops/sec), CPU time (user, sys, total), scaling efficiency ($E_N$), and relative percentage change.
+- `build/experiments_results.csv`: Flattened CSV table suitable for data analysis and visualization.
+
+See [docs/PerformanceAnalysis.md](docs/PerformanceAnalysis.md) for full experimental methodology, workload definitions, and measured numerical findings.
+
 ### Performance Regression Detection
+
 
 SysCore includes automated regression comparison tooling (`scripts/compare_benchmarks.py`) that evaluates current benchmark metrics against a version-controlled repository baseline (`benchmarks/baselines/baseline.json`).
 
