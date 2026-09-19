@@ -230,9 +230,170 @@ syscore_error_t syscore_benchmark_run(const syscore_benchmark_config_t *config,
 
   syscore_benchmark_print_result(&res);
 
+  const char *env_json = getenv("SYSCORE_BENCHMARK_JSON_FILE");
+  if (env_json && strlen(env_json) > 0) {
+    syscore_benchmark_export_json(&res, env_json);
+  }
+
   if (out_result) {
     *out_result = res;
   }
 
+  return SYSCORE_SUCCESS;
+}
+
+syscore_error_t syscore_benchmark_export_json(const syscore_benchmark_result_t *res,
+                                               const char *filepath) {
+  if (!res || !filepath) {
+    return SYSCORE_ERROR_INVALID_ARGUMENT;
+  }
+
+  FILE *fp = fopen(filepath, "r+b");
+  if (!fp) {
+    fp = fopen(filepath, "w+b");
+    if (!fp) {
+      SYSCORE_LOG_ERROR("Failed to open JSON output file: %s", filepath);
+      return SYSCORE_ERROR_GENERIC;
+    }
+    fprintf(fp, "[\n");
+    fprintf(fp,
+            "  {\n"
+            "    \"name\": \"%s\",\n"
+            "    \"warmup_iterations\": %zu,\n"
+            "    \"measured_iterations\": %zu,\n"
+            "    \"total_elapsed_sec\": %.6f,\n"
+            "    \"avg_latency_ns\": %.2f,\n"
+            "    \"min_latency_ns\": %.2f,\n"
+            "    \"max_latency_ns\": %.2f,\n"
+            "    \"p50_latency_ns\": %.2f,\n"
+            "    \"p95_latency_ns\": %.2f,\n"
+            "    \"p99_latency_ns\": %.2f,\n"
+            "    \"stddev_latency_ns\": %.2f,\n"
+            "    \"throughput_ops_sec\": %.2f\n"
+            "  }\n"
+            "]\n",
+            res->name ? res->name : "Unnamed", res->warmup_iterations,
+            res->measured_iterations, res->total_elapsed_sec,
+            res->avg_latency_ns, res->min_latency_ns, res->max_latency_ns,
+            res->p50_latency_ns, res->p95_latency_ns, res->p99_latency_ns,
+            res->stddev_latency_ns, res->throughput_ops_sec);
+    fclose(fp);
+    return SYSCORE_SUCCESS;
+  }
+
+  fseek(fp, 0, SEEK_END);
+  long size = ftell(fp);
+  if (size <= 0) {
+    fclose(fp);
+    fp = fopen(filepath, "w+b");
+    if (!fp) return SYSCORE_ERROR_GENERIC;
+    fprintf(fp, "[\n");
+    fprintf(fp,
+            "  {\n"
+            "    \"name\": \"%s\",\n"
+            "    \"warmup_iterations\": %zu,\n"
+            "    \"measured_iterations\": %zu,\n"
+            "    \"total_elapsed_sec\": %.6f,\n"
+            "    \"avg_latency_ns\": %.2f,\n"
+            "    \"min_latency_ns\": %.2f,\n"
+            "    \"max_latency_ns\": %.2f,\n"
+            "    \"p50_latency_ns\": %.2f,\n"
+            "    \"p95_latency_ns\": %.2f,\n"
+            "    \"p99_latency_ns\": %.2f,\n"
+            "    \"stddev_latency_ns\": %.2f,\n"
+            "    \"throughput_ops_sec\": %.2f\n"
+            "  }\n"
+            "]\n",
+            res->name ? res->name : "Unnamed", res->warmup_iterations,
+            res->measured_iterations, res->total_elapsed_sec,
+            res->avg_latency_ns, res->min_latency_ns, res->max_latency_ns,
+            res->p50_latency_ns, res->p95_latency_ns, res->p99_latency_ns,
+            res->stddev_latency_ns, res->throughput_ops_sec);
+    fclose(fp);
+    return SYSCORE_SUCCESS;
+  }
+
+  char *buf = (char *)malloc((size_t)size + 1);
+  if (!buf) {
+    fclose(fp);
+    return SYSCORE_ERROR_OUT_OF_MEMORY;
+  }
+
+  fseek(fp, 0, SEEK_SET);
+  size_t read_bytes = fread(buf, 1, (size_t)size, fp);
+  buf[read_bytes] = '\0';
+
+  char *last_bracket = strrchr(buf, ']');
+  if (!last_bracket) {
+    free(buf);
+    fclose(fp);
+    fp = fopen(filepath, "w+b");
+    if (!fp) return SYSCORE_ERROR_GENERIC;
+    fprintf(fp, "[\n");
+    fprintf(fp,
+            "  {\n"
+            "    \"name\": \"%s\",\n"
+            "    \"warmup_iterations\": %zu,\n"
+            "    \"measured_iterations\": %zu,\n"
+            "    \"total_elapsed_sec\": %.6f,\n"
+            "    \"avg_latency_ns\": %.2f,\n"
+            "    \"min_latency_ns\": %.2f,\n"
+            "    \"max_latency_ns\": %.2f,\n"
+            "    \"p50_latency_ns\": %.2f,\n"
+            "    \"p95_latency_ns\": %.2f,\n"
+            "    \"p99_latency_ns\": %.2f,\n"
+            "    \"stddev_latency_ns\": %.2f,\n"
+            "    \"throughput_ops_sec\": %.2f\n"
+            "  }\n"
+            "]\n",
+            res->name ? res->name : "Unnamed", res->warmup_iterations,
+            res->measured_iterations, res->total_elapsed_sec,
+            res->avg_latency_ns, res->min_latency_ns, res->max_latency_ns,
+            res->p50_latency_ns, res->p95_latency_ns, res->p99_latency_ns,
+            res->stddev_latency_ns, res->throughput_ops_sec);
+    fclose(fp);
+    return SYSCORE_SUCCESS;
+  }
+
+  long bracket_pos = (long)(last_bracket - buf);
+  fseek(fp, bracket_pos, SEEK_SET);
+
+  int has_prior = 0;
+  for (long p = bracket_pos - 1; p >= 0; p--) {
+    if (buf[p] == '}') {
+      has_prior = 1;
+      break;
+    }
+  }
+
+  free(buf);
+
+  if (has_prior) {
+    fprintf(fp, ",\n");
+  }
+
+  fprintf(fp,
+          "  {\n"
+          "    \"name\": \"%s\",\n"
+          "    \"warmup_iterations\": %zu,\n"
+          "    \"measured_iterations\": %zu,\n"
+          "    \"total_elapsed_sec\": %.6f,\n"
+          "    \"avg_latency_ns\": %.2f,\n"
+          "    \"min_latency_ns\": %.2f,\n"
+          "    \"max_latency_ns\": %.2f,\n"
+          "    \"p50_latency_ns\": %.2f,\n"
+          "    \"p95_latency_ns\": %.2f,\n"
+          "    \"p99_latency_ns\": %.2f,\n"
+          "    \"stddev_latency_ns\": %.2f,\n"
+          "    \"throughput_ops_sec\": %.2f\n"
+          "  }\n"
+          "]\n",
+          res->name ? res->name : "Unnamed", res->warmup_iterations,
+          res->measured_iterations, res->total_elapsed_sec,
+          res->avg_latency_ns, res->min_latency_ns, res->max_latency_ns,
+          res->p50_latency_ns, res->p95_latency_ns, res->p99_latency_ns,
+          res->stddev_latency_ns, res->throughput_ops_sec);
+
+  fclose(fp);
   return SYSCORE_SUCCESS;
 }

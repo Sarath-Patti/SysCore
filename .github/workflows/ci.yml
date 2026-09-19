@@ -25,3 +25,10 @@ jobs:
 
       - name: Test
         run: cd build && ctest --output-on-failure
+
+      - name: Run Benchmarks
+        run: python3 scripts/run_benchmarks.py --build-dir build --output build/results.json
+
+      - name: Performance Regression Validation
+        run: python3 scripts/compare_benchmarks.py --current build/results.json --baseline benchmarks/baselines/baseline.json --threshold 50
+

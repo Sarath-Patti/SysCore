@@ -84,4 +84,16 @@ void syscore_benchmark_format_latency(double ns, char *buf, size_t size);
  */
 void syscore_benchmark_format_throughput(double ops_sec, char *buf, size_t size);
 
+/**
+ * Exports a benchmark result structure to a JSON file.
+ * If the file exists, the result object is appended to the JSON array.
+ * If the file does not exist, a new JSON array file is created.
+ *
+ * @param result Pointer to populated benchmark result structure.
+ * @param filepath Path to the output JSON file.
+ * @return SYSCORE_SUCCESS on success, error code on failure.
+ */
+syscore_error_t syscore_benchmark_export_json(const syscore_benchmark_result_t *result,
+                                               const char *filepath);
+
 #endif // SYSCORE_BENCHMARK_H

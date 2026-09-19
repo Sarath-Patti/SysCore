@@ -185,6 +185,7 @@ SysCore provides a reusable, high-resolution microbenchmarking framework (`sysco
 - **Explicit Lifecycle Hooks:** Setup and teardown functions execute outside timed iteration blocks unless lifecycle cost itself is being explicitly measured.
 - **Configurable Iterations:** Configurable warm-up and measurement iteration loops per benchmark run.
 - **Comprehensive Statistical Reporting:** Reports total elapsed time, throughput (ops/sec), average latency, minimum, maximum, median ($p_{50}$), $p_{95}$, $p_{99}$ percentiles, and standard deviation.
+- **Machine-Readable JSON Output:** Supports emitting structured JSON results via `syscore_benchmark_export_json` or automatically when the `SYSCORE_BENCHMARK_JSON_FILE` environment variable is set.
 
 ### Benchmark Executables
 
@@ -210,13 +211,37 @@ Evaluates synchronization primitive performance under controlled concurrency and
 - `sync_rwlock_bench`: Read-write lock performance across baseline single-reader, read-heavy (8 readers / 1 writer), write-heavy (1 reader / 4 writers), and mixed (4 readers / 4 writers) workloads.
 - `sync_condvar_bench`: Condition variable producer-consumer wait/signal synchronization cost (`syscore_cond_wait`/`syscore_cond_signal`).
 
-### Running Benchmarks
+### Running Benchmarks & Generating Results
 
 Build all benchmark executables in Release mode:
 
 ```bash
 cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
+```
+
+Run the complete benchmark suite and export machine-readable JSON results:
+
+```bash
+python3 scripts/run_benchmarks.py --build-dir build --output build/results.json
+```
+
+### Performance Regression Detection
+
+SysCore includes automated regression comparison tooling (`scripts/compare_benchmarks.py`) that evaluates current benchmark metrics against a version-controlled repository baseline (`benchmarks/baselines/baseline.json`).
+
+- **Configurable Thresholds:** Detects latency increases and throughput drops exceeding a user-configurable percentage threshold (e.g. 25%).
+- **CI Validation:** Integrated into GitHub Actions CI workflows to validate pull requests and commits against performance regressions.
+- **Local Developer Workflow:**
+
+Compare current benchmark results against stored baseline:
+```bash
+python3 scripts/compare_benchmarks.py --current build/results.json --baseline benchmarks/baselines/baseline.json --threshold 25
+```
+
+Intentionally update stored baseline with current results:
+```bash
+python3 scripts/compare_benchmarks.py --current build/results.json --baseline benchmarks/baselines/baseline.json --update-baseline
 ```
 
 Run Phase 1 microbenchmarks:
@@ -278,7 +303,7 @@ Every commit and pull request targeted to the `main` branch is validated automat
 - Shared memory and semaphore wraps (including macOS compatibility emulation).
 - POSIX message queues with priority sorting.
 - Virtual memory mappings (`mmap`, `msync`, `mprotect`).
-- High-resolution microbenchmarking framework (`syscore_benchmark`) and IPC / synchronization performance suites.
+- High-resolution microbenchmarking framework (`syscore_benchmark`), IPC/synchronization performance suites, and automated CI performance regression detection.
 - Custom test suites, benchmarks, and target installation rules.
 
 ### Planned Features

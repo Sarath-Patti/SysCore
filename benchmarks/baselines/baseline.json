@@ -1,0 +1,436 @@
+[
+  {
+    "name": "Mutex Lock/Unlock Latency",
+    "warmup_iterations": 1000,
+    "measured_iterations": 100000,
+    "total_elapsed_sec": 0.012370,
+    "avg_latency_ns": 56.52,
+    "min_latency_ns": 0.00,
+    "max_latency_ns": 1056000.00,
+    "p50_latency_ns": 0.00,
+    "p95_latency_ns": 0.00,
+    "p99_latency_ns": 1000.00,
+    "stddev_latency_ns": 3420.08,
+    "throughput_ops_sec": 8084074.37
+  }
+,
+  {
+    "name": "Semaphore Wait/Post Latency",
+    "warmup_iterations": 1000,
+    "measured_iterations": 100000,
+    "total_elapsed_sec": 0.075056,
+    "avg_latency_ns": 714.48,
+    "min_latency_ns": 0.00,
+    "max_latency_ns": 28000.00,
+    "p50_latency_ns": 1000.00,
+    "p95_latency_ns": 1000.00,
+    "p99_latency_ns": 2000.00,
+    "stddev_latency_ns": 519.96,
+    "throughput_ops_sec": 1332338.52
+  }
+,
+  {
+    "name": "Thread Spawn/Join Latency",
+    "warmup_iterations": 100,
+    "measured_iterations": 1000,
+    "total_elapsed_sec": 0.027502,
+    "avg_latency_ns": 27424.00,
+    "min_latency_ns": 14000.00,
+    "max_latency_ns": 1129000.00,
+    "p50_latency_ns": 25000.00,
+    "p95_latency_ns": 39000.00,
+    "p99_latency_ns": 68020.00,
+    "stddev_latency_ns": 37505.99,
+    "throughput_ops_sec": 36360.99
+  }
+,
+  {
+    "name": "Pipe Round-Trip Communication Latency",
+    "warmup_iterations": 1000,
+    "measured_iterations": 10000,
+    "total_elapsed_sec": 0.010750,
+    "avg_latency_ns": 1031.20,
+    "min_latency_ns": 0.00,
+    "max_latency_ns": 135000.00,
+    "p50_latency_ns": 1000.00,
+    "p95_latency_ns": 2000.00,
+    "p99_latency_ns": 2000.00,
+    "stddev_latency_ns": 2587.26,
+    "throughput_ops_sec": 930232.56
+  }
+,
+  {
+    "name": "Shared Memory Access Latency",
+    "warmup_iterations": 1000,
+    "measured_iterations": 100000,
+    "total_elapsed_sec": 0.012366,
+    "avg_latency_ns": 83.09,
+    "min_latency_ns": 0.00,
+    "max_latency_ns": 2048000.00,
+    "p50_latency_ns": 0.00,
+    "p95_latency_ns": 1000.00,
+    "p99_latency_ns": 1000.00,
+    "stddev_latency_ns": 6487.58,
+    "throughput_ops_sec": 8086689.31
+  }
+,
+  {
+    "name": "Memory Mapping (Mmap/Munmap) Page Latency",
+    "warmup_iterations": 500,
+    "measured_iterations": 5000,
+    "total_elapsed_sec": 0.003452,
+    "avg_latency_ns": 657.60,
+    "min_latency_ns": 0.00,
+    "max_latency_ns": 2000.00,
+    "p50_latency_ns": 1000.00,
+    "p95_latency_ns": 2000.00,
+    "p99_latency_ns": 2000.00,
+    "stddev_latency_ns": 607.32,
+    "throughput_ops_sec": 1448435.69
+  }
+,
+  {
+    "name": "IPC Pipe Latency (1 Byte Payload)",
+    "warmup_iterations": 500,
+    "measured_iterations": 5000,
+    "total_elapsed_sec": 0.005015,
+    "avg_latency_ns": 963.00,
+    "min_latency_ns": 0.00,
+    "max_latency_ns": 25000.00,
+    "p50_latency_ns": 1000.00,
+    "p95_latency_ns": 1000.00,
+    "p99_latency_ns": 1000.00,
+    "stddev_latency_ns": 440.53,
+    "throughput_ops_sec": 997008.97
+  }
+,
+  {
+    "name": "IPC Pipe Latency (64 Bytes Payload)",
+    "warmup_iterations": 500,
+    "measured_iterations": 5000,
+    "total_elapsed_sec": 0.004117,
+    "avg_latency_ns": 780.20,
+    "min_latency_ns": 0.00,
+    "max_latency_ns": 3000.00,
+    "p50_latency_ns": 1000.00,
+    "p95_latency_ns": 2000.00,
+    "p99_latency_ns": 2000.00,
+    "stddev_latency_ns": 639.66,
+    "throughput_ops_sec": 1214476.56
+  }
+,
+  {
+    "name": "IPC Pipe Latency (256 Bytes Payload)",
+    "warmup_iterations": 500,
+    "measured_iterations": 5000,
+    "total_elapsed_sec": 0.004056,
+    "avg_latency_ns": 777.60,
+    "min_latency_ns": 0.00,
+    "max_latency_ns": 23000.00,
+    "p50_latency_ns": 1000.00,
+    "p95_latency_ns": 2000.00,
+    "p99_latency_ns": 2000.00,
+    "stddev_latency_ns": 784.26,
+    "throughput_ops_sec": 1232741.62
+  }
+,
+  {
+    "name": "IPC Pipe Latency (1024 Bytes Payload)",
+    "warmup_iterations": 500,
+    "measured_iterations": 5000,
+    "total_elapsed_sec": 0.004135,
+    "avg_latency_ns": 794.20,
+    "min_latency_ns": 0.00,
+    "max_latency_ns": 8000.00,
+    "p50_latency_ns": 1000.00,
+    "p95_latency_ns": 2000.00,
+    "p99_latency_ns": 2000.00,
+    "stddev_latency_ns": 573.68,
+    "throughput_ops_sec": 1209189.84
+  }
+,
+  {
+    "name": "Shared Memory Access (1 Thread)",
+    "warmup_iterations": 200,
+    "measured_iterations": 5000,
+    "total_elapsed_sec": 0.000401,
+    "avg_latency_ns": 46.20,
+    "min_latency_ns": 0.00,
+    "max_latency_ns": 12000.00,
+    "p50_latency_ns": 0.00,
+    "p95_latency_ns": 0.00,
+    "p99_latency_ns": 1000.00,
+    "stddev_latency_ns": 275.10,
+    "throughput_ops_sec": 12468827.93
+  }
+,
+  {
+    "name": "Shared Memory Access (2 Threads Contended)",
+    "warmup_iterations": 200,
+    "measured_iterations": 5000,
+    "total_elapsed_sec": 0.110626,
+    "avg_latency_ns": 22072.20,
+    "min_latency_ns": 14000.00,
+    "max_latency_ns": 108000.00,
+    "p50_latency_ns": 21000.00,
+    "p95_latency_ns": 32050.00,
+    "p99_latency_ns": 47000.00,
+    "stddev_latency_ns": 5906.33,
+    "throughput_ops_sec": 45197.33
+  }
+,
+  {
+    "name": "Shared Memory Access (4 Threads Contended)",
+    "warmup_iterations": 50,
+    "measured_iterations": 500,
+    "total_elapsed_sec": 0.016890,
+    "avg_latency_ns": 33738.00,
+    "min_latency_ns": 21000.00,
+    "max_latency_ns": 73000.00,
+    "p50_latency_ns": 32000.00,
+    "p95_latency_ns": 50000.00,
+    "p99_latency_ns": 56020.00,
+    "stddev_latency_ns": 8214.64,
+    "throughput_ops_sec": 29603.32
+  }
+,
+  {
+    "name": "Shared Memory Access (8 Threads Contended)",
+    "warmup_iterations": 50,
+    "measured_iterations": 500,
+    "total_elapsed_sec": 0.026730,
+    "avg_latency_ns": 53432.00,
+    "min_latency_ns": 41000.00,
+    "max_latency_ns": 104000.00,
+    "p50_latency_ns": 52000.00,
+    "p95_latency_ns": 69000.00,
+    "p99_latency_ns": 77010.00,
+    "stddev_latency_ns": 7639.77,
+    "throughput_ops_sec": 18705.57
+  }
+,
+  {
+    "name": "Message Queue Latency (64 Bytes Payload)",
+    "warmup_iterations": 200,
+    "measured_iterations": 2000,
+    "total_elapsed_sec": 0.004587,
+    "avg_latency_ns": 2269.50,
+    "min_latency_ns": 1000.00,
+    "max_latency_ns": 42000.00,
+    "p50_latency_ns": 2000.00,
+    "p95_latency_ns": 3000.00,
+    "p99_latency_ns": 5000.00,
+    "stddev_latency_ns": 1810.94,
+    "throughput_ops_sec": 436014.82
+  }
+,
+  {
+    "name": "Message Queue Latency (256 Bytes Payload)",
+    "warmup_iterations": 200,
+    "measured_iterations": 2000,
+    "total_elapsed_sec": 0.004003,
+    "avg_latency_ns": 1977.50,
+    "min_latency_ns": 1000.00,
+    "max_latency_ns": 4000.00,
+    "p50_latency_ns": 2000.00,
+    "p95_latency_ns": 2000.00,
+    "p99_latency_ns": 3000.00,
+    "stddev_latency_ns": 282.90,
+    "throughput_ops_sec": 499625.28
+  }
+,
+  {
+    "name": "Mutex Lock/Unlock (1 Thread Uncontended)",
+    "warmup_iterations": 500,
+    "measured_iterations": 10000,
+    "total_elapsed_sec": 0.000736,
+    "avg_latency_ns": 41.00,
+    "min_latency_ns": 0.00,
+    "max_latency_ns": 4000.00,
+    "p50_latency_ns": 0.00,
+    "p95_latency_ns": 0.00,
+    "p99_latency_ns": 1000.00,
+    "stddev_latency_ns": 201.30,
+    "throughput_ops_sec": 13586956.52
+  }
+,
+  {
+    "name": "Mutex Lock/Unlock (2 Threads Contended)",
+    "warmup_iterations": 500,
+    "measured_iterations": 10000,
+    "total_elapsed_sec": 0.222849,
+    "avg_latency_ns": 22233.00,
+    "min_latency_ns": 13000.00,
+    "max_latency_ns": 110000.00,
+    "p50_latency_ns": 21000.00,
+    "p95_latency_ns": 29000.00,
+    "p99_latency_ns": 40000.00,
+    "stddev_latency_ns": 4636.77,
+    "throughput_ops_sec": 44873.43
+  }
+,
+  {
+    "name": "Mutex Lock/Unlock (4 Threads Contended)",
+    "warmup_iterations": 50,
+    "measured_iterations": 500,
+    "total_elapsed_sec": 0.016683,
+    "avg_latency_ns": 33310.00,
+    "min_latency_ns": 23000.00,
+    "max_latency_ns": 67000.00,
+    "p50_latency_ns": 31000.00,
+    "p95_latency_ns": 50000.00,
+    "p99_latency_ns": 60010.00,
+    "stddev_latency_ns": 7816.91,
+    "throughput_ops_sec": 29970.63
+  }
+,
+  {
+    "name": "Mutex Lock/Unlock (8 Threads Contended)",
+    "warmup_iterations": 50,
+    "measured_iterations": 500,
+    "total_elapsed_sec": 0.026117,
+    "avg_latency_ns": 52198.00,
+    "min_latency_ns": 42000.00,
+    "max_latency_ns": 96000.00,
+    "p50_latency_ns": 51000.00,
+    "p95_latency_ns": 67050.00,
+    "p99_latency_ns": 78000.00,
+    "stddev_latency_ns": 7552.81,
+    "throughput_ops_sec": 19144.62
+  }
+,
+  {
+    "name": "Semaphore Wait/Post (1 Thread Uncontended)",
+    "warmup_iterations": 500,
+    "measured_iterations": 5000,
+    "total_elapsed_sec": 0.004846,
+    "avg_latency_ns": 934.20,
+    "min_latency_ns": 0.00,
+    "max_latency_ns": 9000.00,
+    "p50_latency_ns": 1000.00,
+    "p95_latency_ns": 1000.00,
+    "p99_latency_ns": 1000.00,
+    "stddev_latency_ns": 281.93,
+    "throughput_ops_sec": 1031778.79
+  }
+,
+  {
+    "name": "Semaphore Wait/Post (2 Threads Contended)",
+    "warmup_iterations": 500,
+    "measured_iterations": 5000,
+    "total_elapsed_sec": 0.168418,
+    "avg_latency_ns": 33643.20,
+    "min_latency_ns": 13000.00,
+    "max_latency_ns": 101000.00,
+    "p50_latency_ns": 34000.00,
+    "p95_latency_ns": 53000.00,
+    "p99_latency_ns": 63000.00,
+    "stddev_latency_ns": 12017.37,
+    "throughput_ops_sec": 29688.04
+  }
+,
+  {
+    "name": "Semaphore Wait/Post (4 Threads Contended)",
+    "warmup_iterations": 50,
+    "measured_iterations": 500,
+    "total_elapsed_sec": 0.020213,
+    "avg_latency_ns": 40376.00,
+    "min_latency_ns": 24000.00,
+    "max_latency_ns": 135000.00,
+    "p50_latency_ns": 37500.00,
+    "p95_latency_ns": 68000.00,
+    "p99_latency_ns": 86030.00,
+    "stddev_latency_ns": 15022.05,
+    "throughput_ops_sec": 24736.56
+  }
+,
+  {
+    "name": "Semaphore Wait/Post (8 Threads Contended)",
+    "warmup_iterations": 50,
+    "measured_iterations": 500,
+    "total_elapsed_sec": 0.051168,
+    "avg_latency_ns": 102306.00,
+    "min_latency_ns": 42000.00,
+    "max_latency_ns": 214000.00,
+    "p50_latency_ns": 105500.00,
+    "p95_latency_ns": 152050.00,
+    "p99_latency_ns": 177020.00,
+    "stddev_latency_ns": 32757.20,
+    "throughput_ops_sec": 9771.73
+  }
+,
+  {
+    "name": "Read-Write Lock (Single Reader Uncontended)",
+    "warmup_iterations": 500,
+    "measured_iterations": 5000,
+    "total_elapsed_sec": 0.000402,
+    "avg_latency_ns": 46.00,
+    "min_latency_ns": 0.00,
+    "max_latency_ns": 15000.00,
+    "p50_latency_ns": 0.00,
+    "p95_latency_ns": 0.00,
+    "p99_latency_ns": 1000.00,
+    "stddev_latency_ns": 293.09,
+    "throughput_ops_sec": 12437810.95
+  }
+,
+  {
+    "name": "Read-Write Lock Read-Heavy (8 Readers, 1 Writer)",
+    "warmup_iterations": 50,
+    "measured_iterations": 500,
+    "total_elapsed_sec": 0.046906,
+    "avg_latency_ns": 93754.00,
+    "min_latency_ns": 56000.00,
+    "max_latency_ns": 208000.00,
+    "p50_latency_ns": 80000.00,
+    "p95_latency_ns": 156000.00,
+    "p99_latency_ns": 174040.00,
+    "stddev_latency_ns": 30499.47,
+    "throughput_ops_sec": 10659.62
+  }
+,
+  {
+    "name": "Read-Write Lock Write-Heavy (1 Reader, 4 Writers)",
+    "warmup_iterations": 50,
+    "measured_iterations": 500,
+    "total_elapsed_sec": 0.019555,
+    "avg_latency_ns": 39056.00,
+    "min_latency_ns": 26000.00,
+    "max_latency_ns": 104000.00,
+    "p50_latency_ns": 34000.00,
+    "p95_latency_ns": 61050.00,
+    "p99_latency_ns": 91020.00,
+    "stddev_latency_ns": 12638.05,
+    "throughput_ops_sec": 25568.91
+  }
+,
+  {
+    "name": "Read-Write Lock Mixed (4 Readers, 4 Writers)",
+    "warmup_iterations": 50,
+    "measured_iterations": 500,
+    "total_elapsed_sec": 0.026770,
+    "avg_latency_ns": 53510.00,
+    "min_latency_ns": 39000.00,
+    "max_latency_ns": 161000.00,
+    "p50_latency_ns": 51000.00,
+    "p95_latency_ns": 73000.00,
+    "p99_latency_ns": 135040.00,
+    "stddev_latency_ns": 13793.56,
+    "throughput_ops_sec": 18677.62
+  }
+,
+  {
+    "name": "Condition Variable Wait/Signal Latency (Producer-Consumer)",
+    "warmup_iterations": 200,
+    "measured_iterations": 2000,
+    "total_elapsed_sec": 0.032471,
+    "avg_latency_ns": 16178.00,
+    "min_latency_ns": 9000.00,
+    "max_latency_ns": 58000.00,
+    "p50_latency_ns": 15000.00,
+    "p95_latency_ns": 26000.00,
+    "p99_latency_ns": 33000.00,
+    "stddev_latency_ns": 4525.43,
+    "throughput_ops_sec": 61593.42
+  }
+]
