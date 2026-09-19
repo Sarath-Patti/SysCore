@@ -20,10 +20,10 @@ Developers can leverage SysCore as a lightweight systems engineering layer for s
 | Standard | C17 |
 | Build System | CMake (3.15+) |
 | Platforms | Linux, macOS |
-| Modules | 9 (Common, Process, IPC, Threading, Synchronization, Shared Memory, Semaphores, Message Queues, Memory Mapping) |
+| Modules | 10 (Common, Process, IPC, Threading, Synchronization, Shared Memory, Semaphores, Message Queues, Memory Mapping, Benchmark) |
 | Example Programs | 21 |
-| Unit Tests | 9 (CTest Integration) |
-| Benchmarks | 4 |
+| Unit Tests | 10 (CTest Integration) |
+| Benchmarks | 13 |
 | CI | GitHub Actions |
 | License | MIT |
 
@@ -51,6 +51,7 @@ ctest --test-dir build
 | **POSIX Semaphores** | Value barriers with portable macOS fallback implementations. | Unnamed and named semaphore wrappers |
 | **POSIX Message Queues** | Priority-ordered blocking messaging queues. | Message queue attributes, priority ordering, blocking/non-blocking modes, and custom macOS emulation |
 | **Memory Mapping** | Page-aligned virtual memory block allocations and protections. | Anonymous and file-backed mappings, memory protection modification (`mprotect`), and disk synchronization (`msync`) |
+| **Performance Engineering** | Reusable high-resolution microbenchmarking framework. | `syscore_benchmark_run`, `syscore_benchmark_config_t`, setup/step/teardown lifecycle, percentiles ($p_{50}$, $p_{95}$, $p_{99}$) |
 | **Cross-platform Support** | Clean compilation across multiple target platforms. | Verified warning-free builds on Ubuntu (GCC) and macOS (AppleClang) |
 | **CMake Build System** | Modern library target installation and integration definitions. | Target installation rules and CMake export file targets |
 | **Automated Testing** | Core library unit testing infrastructure. | Automated test suite integrated with CTest runner |
@@ -100,6 +101,7 @@ SysCore/
 ├── CMakeLists.txt        # Root build configuration script
 ├── cmake/                # Auxiliary CMake files
 ├── include/              # Public API definition headers
+│   ├── benchmark/        # Microbenchmarking framework headers
 │   ├── common/           # Central options, errors, logging configurations
 │   ├── ipc/              # Pipes, message queues
 │   ├── memory/           # Shared memory segment, mmap
@@ -164,7 +166,7 @@ Example executables are placed in the `build/` directory. Run representative exa
 
 ## Testing
 
-SysCore contains a full suite of automated unit tests that compile warning-free and execute correctly. The build status and test correctness are verified continuously on Ubuntu (GCC) and macOS (AppleClang) environments using GitHub Actions and CTest.
+SysCore contains a full suite of automated unit tests covering all library modules and the microbenchmarking framework (`test_benchmark`). The build status and test correctness are verified continuously on Ubuntu (GCC) and macOS (AppleClang) environments using GitHub Actions and CTest.
 
 Run the test suite locally using the following command:
 
@@ -173,23 +175,77 @@ cd build
 ctest --output-on-failure
 ```
 
-## Benchmarks
+## Performance Engineering & Benchmarking
 
-Timing benchmark files are located under the `benchmarks/` directory. These measure the performance overhead of core system operations:
+SysCore provides a reusable, high-resolution microbenchmarking framework (`syscore_benchmark`) designed to systematically measure the performance characteristics of SysCore's IPC and synchronization mechanisms under controlled workloads and concurrency levels.
 
-- `thread_latency`: Evaluates spawning and joining latency for thread creation.
-- `pipe_latency`: Evaluates round-trip timing overhead for pipe read and write calls.
-- `semaphore_latency`: Evaluates wait and post execution times for unnamed semaphores.
-- `mmap_latency`: Evaluates memory allocation and mapping / unmapping rates.
+### Framework Features
 
-Run the benchmark binaries from the build directory:
+- **Monotonic High-Resolution Timing:** Uses OS-level monotonic clocks (`CLOCK_MONOTONIC`) to avoid time skew artifacts.
+- **Explicit Lifecycle Hooks:** Setup and teardown functions execute outside timed iteration blocks unless lifecycle cost itself is being explicitly measured.
+- **Configurable Iterations:** Configurable warm-up and measurement iteration loops per benchmark run.
+- **Comprehensive Statistical Reporting:** Reports total elapsed time, throughput (ops/sec), average latency, minimum, maximum, median ($p_{50}$), $p_{95}$, $p_{99}$ percentiles, and standard deviation.
+
+### Benchmark Executables
+
+#### Phase 1 Microbenchmarks
+Evaluates baseline operational overheads for core system primitives:
+- `mutex_latency`: Uncontended mutex lock/unlock latency.
+- `semaphore_latency`: Uncontended semaphore wait/post execution times.
+- `thread_latency`: Thread creation (`syscore_thread_create`) and joining (`syscore_thread_join`) overhead.
+- `pipe_latency`: Round-trip pipe communication latency.
+- `shm_latency`: Shared memory segment access latency.
+- `mmap_latency`: Virtual memory mapping (`mmap`/`munmap`) allocation rates.
+
+#### Phase 2 IPC Performance Suite
+Evaluates communication performance across payload sizes and thread counts:
+- `ipc_pipe_bench`: Pipe communication throughput and latency across varying payload sizes (1 B, 64 B, 256 B, 1024 B).
+- `ipc_shm_bench`: Shared memory access latency under multi-threaded contention (1, 2, 4, 8 threads).
+- `ipc_mq_bench`: POSIX message queue send/receive latency and throughput (64 B, 256 B payload sizes).
+
+#### Phase 2 Synchronization Performance Suite
+Evaluates synchronization primitive performance under controlled concurrency and workload patterns:
+- `sync_mutex_bench`: Mutex lock/unlock latency uncontended (1 thread) and under active multi-threaded contention (2, 4, 8 threads).
+- `sync_semaphore_bench`: Semaphore wait/post latency uncontended (1 thread) and under active multi-threaded contention (2, 4, 8 threads).
+- `sync_rwlock_bench`: Read-write lock performance across baseline single-reader, read-heavy (8 readers / 1 writer), write-heavy (1 reader / 4 writers), and mixed (4 readers / 4 writers) workloads.
+- `sync_condvar_bench`: Condition variable producer-consumer wait/signal synchronization cost (`syscore_cond_wait`/`syscore_cond_signal`).
+
+### Running Benchmarks
+
+Build all benchmark executables in Release mode:
 
 ```bash
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+```
+
+Run Phase 1 microbenchmarks:
+```bash
+./build/mutex_latency
+./build/semaphore_latency
 ./build/thread_latency
 ./build/pipe_latency
-./build/semaphore_latency
+./build/shm_latency
 ./build/mmap_latency
 ```
+
+Run Phase 2 IPC and Synchronization benchmark suites:
+```bash
+./build/ipc_pipe_bench
+./build/ipc_shm_bench
+./build/ipc_mq_bench
+./build/sync_mutex_bench
+./build/sync_semaphore_bench
+./build/sync_rwlock_bench
+./build/sync_condvar_bench
+```
+
+### Design & Measurement Notes
+
+- **Isolated Timed Regions:** Setup and teardown run outside measured iteration loops so initialization costs do not distort operation timings.
+- **Explicit Workloads:** Workload parameters (payload size, concurrency level, operation count) are explicitly declared per benchmark configuration.
+- **Cross-Platform Compatibility:** Benchmarks run on both Linux and macOS. On macOS, POSIX message queues utilize SysCore's platform-specific shared-memory emulation layer.
+- **Hardware & OS Dependencies:** Benchmark metrics are system-dependent and influenced by CPU architecture, OS thread scheduling, and compiler optimizations. Results should be evaluated under controlled, consistent environments.
 
 ## Documentation
 
@@ -222,6 +278,7 @@ Every commit and pull request targeted to the `main` branch is validated automat
 - Shared memory and semaphore wraps (including macOS compatibility emulation).
 - POSIX message queues with priority sorting.
 - Virtual memory mappings (`mmap`, `msync`, `mprotect`).
+- High-resolution microbenchmarking framework (`syscore_benchmark`) and IPC / synchronization performance suites.
 - Custom test suites, benchmarks, and target installation rules.
 
 ### Planned Features

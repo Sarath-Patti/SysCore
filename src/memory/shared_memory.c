@@ -74,8 +74,12 @@ syscore_error_t syscore_shm_open(const char *name, int write_mode,
   int fd = shm_open(name, flags, 0);
   if (fd < 0) {
     int err = errno;
-    SYSCORE_LOG_ERROR("shm_open failed for %s: %s (errno %d)", name,
-                      strerror(err), err);
+    if (err == ENOENT) {
+      SYSCORE_LOG_DEBUG("shm_open: object %s not found (errno %d)", name, err);
+    } else {
+      SYSCORE_LOG_ERROR("shm_open failed for %s: %s (errno %d)", name,
+                        strerror(err), err);
+    }
     return map_errno(err);
   }
 
@@ -146,8 +150,12 @@ syscore_error_t syscore_shm_destroy(const char *name) {
   SYSCORE_LOG_DEBUG("Unlinking shared memory object: %s", name);
   if (shm_unlink(name) < 0) {
     int err = errno;
-    SYSCORE_LOG_ERROR("shm_unlink failed for %s: %s (errno %d)", name,
-                      strerror(err), err);
+    if (err == ENOENT) {
+      SYSCORE_LOG_DEBUG("shm_unlink: object %s not found (errno %d)", name, err);
+    } else {
+      SYSCORE_LOG_ERROR("shm_unlink failed for %s: %s (errno %d)", name,
+                        strerror(err), err);
+    }
     return map_errno(err);
   }
 
