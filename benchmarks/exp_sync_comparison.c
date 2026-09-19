@@ -9,8 +9,13 @@
 
 typedef struct {
   syscore_mutex_t mutex;
+  syscore_sem_t sem_start;
+  syscore_sem_t sem_done;
+  syscore_thread_t threads[8];
   size_t threads_count;
+  size_t threads_created;
   size_t ops_per_thread;
+  volatile int stop_flag;
   volatile size_t counter;
 } mutex_exp_ctx_t;
 
@@ -21,11 +26,21 @@ typedef struct {
 static void *mutex_exp_worker(void *arg) {
   mutex_worker_arg_t *warg = (mutex_worker_arg_t *)arg;
   mutex_exp_ctx_t *ctx = warg->ctx;
+  free(warg);
 
-  for (size_t i = 0; i < ctx->ops_per_thread; i++) {
-    syscore_mutex_lock(&ctx->mutex);
-    ctx->counter++;
-    syscore_mutex_unlock(&ctx->mutex);
+  while (1) {
+    syscore_error_t err = syscore_sem_wait(&ctx->sem_start);
+    if (err != SYSCORE_SUCCESS || ctx->stop_flag) {
+      break;
+    }
+
+    for (size_t i = 0; i < ctx->ops_per_thread; i++) {
+      syscore_mutex_lock(&ctx->mutex);
+      ctx->counter++;
+      syscore_mutex_unlock(&ctx->mutex);
+    }
+
+    syscore_sem_post(&ctx->sem_done);
   }
 
   return NULL;
@@ -39,6 +54,55 @@ static syscore_error_t mutex_exp_setup(void **user_data) {
   if (err != SYSCORE_SUCCESS) return err;
 
   ctx->counter = 0;
+  ctx->threads_created = 0;
+  ctx->stop_flag = 0;
+
+  if (ctx->threads_count > 1) {
+    err = syscore_sem_init(&ctx->sem_start, 0, 0);
+    if (err != SYSCORE_SUCCESS) {
+      syscore_mutex_destroy(&ctx->mutex);
+      return err;
+    }
+
+    err = syscore_sem_init(&ctx->sem_done, 0, 0);
+    if (err != SYSCORE_SUCCESS) {
+      syscore_sem_destroy(&ctx->sem_start);
+      syscore_mutex_destroy(&ctx->mutex);
+      return err;
+    }
+
+    ctx->ops_per_thread = 10;
+    for (size_t i = 0; i < ctx->threads_count; i++) {
+      mutex_worker_arg_t *arg = (mutex_worker_arg_t *)malloc(sizeof(mutex_worker_arg_t));
+      if (!arg) {
+        err = SYSCORE_ERROR_OUT_OF_MEMORY;
+        break;
+      }
+      arg->ctx = ctx;
+
+      err = syscore_thread_create(&ctx->threads[i], NULL, mutex_exp_worker, arg);
+      if (err != SYSCORE_SUCCESS) {
+        free(arg);
+        break;
+      }
+      ctx->threads_created++;
+    }
+
+    if (err != SYSCORE_SUCCESS) {
+      ctx->stop_flag = 1;
+      for (size_t i = 0; i < ctx->threads_created; i++) {
+        syscore_sem_post(&ctx->sem_start);
+      }
+      for (size_t i = 0; i < ctx->threads_created; i++) {
+        syscore_thread_join(ctx->threads[i], NULL);
+      }
+      syscore_sem_destroy(&ctx->sem_start);
+      syscore_sem_destroy(&ctx->sem_done);
+      syscore_mutex_destroy(&ctx->mutex);
+      return err;
+    }
+  }
+
   return SYSCORE_SUCCESS;
 }
 
@@ -50,19 +114,12 @@ static syscore_error_t mutex_exp_step(void *user_data) {
     ctx->counter++;
     syscore_mutex_unlock(&ctx->mutex);
   } else {
-    syscore_thread_t threads[8];
-    mutex_worker_arg_t args[8];
-    ctx->ops_per_thread = 10;
-
     for (size_t i = 0; i < ctx->threads_count; i++) {
-      args[i].ctx = ctx;
-      syscore_error_t err =
-          syscore_thread_create(&threads[i], NULL, mutex_exp_worker, &args[i]);
-      if (err != SYSCORE_SUCCESS) return err;
+      syscore_sem_post(&ctx->sem_start);
     }
 
     for (size_t i = 0; i < ctx->threads_count; i++) {
-      syscore_thread_join(threads[i], NULL);
+      syscore_sem_wait(&ctx->sem_done);
     }
   }
 
@@ -72,6 +129,17 @@ static syscore_error_t mutex_exp_step(void *user_data) {
 static void mutex_exp_teardown(void *user_data) {
   mutex_exp_ctx_t *ctx = (mutex_exp_ctx_t *)user_data;
   if (ctx) {
+    if (ctx->threads_created > 0) {
+      ctx->stop_flag = 1;
+      for (size_t i = 0; i < ctx->threads_created; i++) {
+        syscore_sem_post(&ctx->sem_start);
+      }
+      for (size_t i = 0; i < ctx->threads_created; i++) {
+        syscore_thread_join(ctx->threads[i], NULL);
+      }
+      syscore_sem_destroy(&ctx->sem_start);
+      syscore_sem_destroy(&ctx->sem_done);
+    }
     syscore_mutex_destroy(&ctx->mutex);
   }
 }
@@ -80,8 +148,13 @@ static void mutex_exp_teardown(void *user_data) {
 
 typedef struct {
   syscore_sem_t sem;
+  syscore_sem_t sem_start;
+  syscore_sem_t sem_done;
+  syscore_thread_t threads[8];
   size_t threads_count;
+  size_t threads_created;
   size_t ops_per_thread;
+  volatile int stop_flag;
   volatile size_t counter;
 } sem_exp_ctx_t;
 
@@ -92,11 +165,21 @@ typedef struct {
 static void *sem_exp_worker(void *arg) {
   sem_worker_arg_t *warg = (sem_worker_arg_t *)arg;
   sem_exp_ctx_t *ctx = warg->ctx;
+  free(warg);
 
-  for (size_t i = 0; i < ctx->ops_per_thread; i++) {
-    syscore_sem_wait(&ctx->sem);
-    ctx->counter++;
-    syscore_sem_post(&ctx->sem);
+  while (1) {
+    syscore_error_t err = syscore_sem_wait(&ctx->sem_start);
+    if (err != SYSCORE_SUCCESS || ctx->stop_flag) {
+      break;
+    }
+
+    for (size_t i = 0; i < ctx->ops_per_thread; i++) {
+      syscore_sem_wait(&ctx->sem);
+      ctx->counter++;
+      syscore_sem_post(&ctx->sem);
+    }
+
+    syscore_sem_post(&ctx->sem_done);
   }
 
   return NULL;
@@ -110,6 +193,55 @@ static syscore_error_t sem_exp_setup(void **user_data) {
   if (err != SYSCORE_SUCCESS) return err;
 
   ctx->counter = 0;
+  ctx->threads_created = 0;
+  ctx->stop_flag = 0;
+
+  if (ctx->threads_count > 1) {
+    err = syscore_sem_init(&ctx->sem_start, 0, 0);
+    if (err != SYSCORE_SUCCESS) {
+      syscore_sem_destroy(&ctx->sem);
+      return err;
+    }
+
+    err = syscore_sem_init(&ctx->sem_done, 0, 0);
+    if (err != SYSCORE_SUCCESS) {
+      syscore_sem_destroy(&ctx->sem_start);
+      syscore_sem_destroy(&ctx->sem);
+      return err;
+    }
+
+    ctx->ops_per_thread = 10;
+    for (size_t i = 0; i < ctx->threads_count; i++) {
+      sem_worker_arg_t *arg = (sem_worker_arg_t *)malloc(sizeof(sem_worker_arg_t));
+      if (!arg) {
+        err = SYSCORE_ERROR_OUT_OF_MEMORY;
+        break;
+      }
+      arg->ctx = ctx;
+
+      err = syscore_thread_create(&ctx->threads[i], NULL, sem_exp_worker, arg);
+      if (err != SYSCORE_SUCCESS) {
+        free(arg);
+        break;
+      }
+      ctx->threads_created++;
+    }
+
+    if (err != SYSCORE_SUCCESS) {
+      ctx->stop_flag = 1;
+      for (size_t i = 0; i < ctx->threads_created; i++) {
+        syscore_sem_post(&ctx->sem_start);
+      }
+      for (size_t i = 0; i < ctx->threads_created; i++) {
+        syscore_thread_join(ctx->threads[i], NULL);
+      }
+      syscore_sem_destroy(&ctx->sem_start);
+      syscore_sem_destroy(&ctx->sem_done);
+      syscore_sem_destroy(&ctx->sem);
+      return err;
+    }
+  }
+
   return SYSCORE_SUCCESS;
 }
 
@@ -121,19 +253,12 @@ static syscore_error_t sem_exp_step(void *user_data) {
     ctx->counter++;
     syscore_sem_post(&ctx->sem);
   } else {
-    syscore_thread_t threads[8];
-    sem_worker_arg_t args[8];
-    ctx->ops_per_thread = 10;
-
     for (size_t i = 0; i < ctx->threads_count; i++) {
-      args[i].ctx = ctx;
-      syscore_error_t err =
-          syscore_thread_create(&threads[i], NULL, sem_exp_worker, &args[i]);
-      if (err != SYSCORE_SUCCESS) return err;
+      syscore_sem_post(&ctx->sem_start);
     }
 
     for (size_t i = 0; i < ctx->threads_count; i++) {
-      syscore_thread_join(threads[i], NULL);
+      syscore_sem_wait(&ctx->sem_done);
     }
   }
 
@@ -143,6 +268,17 @@ static syscore_error_t sem_exp_step(void *user_data) {
 static void sem_exp_teardown(void *user_data) {
   sem_exp_ctx_t *ctx = (sem_exp_ctx_t *)user_data;
   if (ctx) {
+    if (ctx->threads_created > 0) {
+      ctx->stop_flag = 1;
+      for (size_t i = 0; i < ctx->threads_created; i++) {
+        syscore_sem_post(&ctx->sem_start);
+      }
+      for (size_t i = 0; i < ctx->threads_created; i++) {
+        syscore_thread_join(ctx->threads[i], NULL);
+      }
+      syscore_sem_destroy(&ctx->sem_start);
+      syscore_sem_destroy(&ctx->sem_done);
+    }
     syscore_sem_destroy(&ctx->sem);
   }
 }
@@ -151,8 +287,13 @@ static void sem_exp_teardown(void *user_data) {
 
 typedef struct {
   syscore_rwlock_t rwlock;
+  syscore_sem_t sem_start;
+  syscore_sem_t sem_done;
+  syscore_thread_t threads[8];
   size_t threads_count;
+  size_t threads_created;
   size_t ops_per_thread;
+  volatile int stop_flag;
   volatile size_t counter;
 } rwlock_exp_ctx_t;
 
@@ -164,17 +305,28 @@ typedef struct {
 static void *rwlock_exp_worker(void *arg) {
   rwlock_worker_arg_t *warg = (rwlock_worker_arg_t *)arg;
   rwlock_exp_ctx_t *ctx = warg->ctx;
+  int is_writer = warg->is_writer;
+  free(warg);
 
-  for (size_t i = 0; i < ctx->ops_per_thread; i++) {
-    if (warg->is_writer) {
-      syscore_rwlock_wrlock(&ctx->rwlock);
-      ctx->counter++;
-      syscore_rwlock_unlock(&ctx->rwlock);
-    } else {
-      syscore_rwlock_rdlock(&ctx->rwlock);
-      (void)ctx->counter;
-      syscore_rwlock_unlock(&ctx->rwlock);
+  while (1) {
+    syscore_error_t err = syscore_sem_wait(&ctx->sem_start);
+    if (err != SYSCORE_SUCCESS || ctx->stop_flag) {
+      break;
     }
+
+    for (size_t i = 0; i < ctx->ops_per_thread; i++) {
+      if (is_writer) {
+        syscore_rwlock_wrlock(&ctx->rwlock);
+        ctx->counter++;
+        syscore_rwlock_unlock(&ctx->rwlock);
+      } else {
+        syscore_rwlock_rdlock(&ctx->rwlock);
+        (void)ctx->counter;
+        syscore_rwlock_unlock(&ctx->rwlock);
+      }
+    }
+
+    syscore_sem_post(&ctx->sem_done);
   }
 
   return NULL;
@@ -188,6 +340,56 @@ static syscore_error_t rwlock_exp_setup(void **user_data) {
   if (err != SYSCORE_SUCCESS) return err;
 
   ctx->counter = 0;
+  ctx->threads_created = 0;
+  ctx->stop_flag = 0;
+
+  if (ctx->threads_count > 1) {
+    err = syscore_sem_init(&ctx->sem_start, 0, 0);
+    if (err != SYSCORE_SUCCESS) {
+      syscore_rwlock_destroy(&ctx->rwlock);
+      return err;
+    }
+
+    err = syscore_sem_init(&ctx->sem_done, 0, 0);
+    if (err != SYSCORE_SUCCESS) {
+      syscore_sem_destroy(&ctx->sem_start);
+      syscore_rwlock_destroy(&ctx->rwlock);
+      return err;
+    }
+
+    ctx->ops_per_thread = 10;
+    for (size_t i = 0; i < ctx->threads_count; i++) {
+      rwlock_worker_arg_t *arg = (rwlock_worker_arg_t *)malloc(sizeof(rwlock_worker_arg_t));
+      if (!arg) {
+        err = SYSCORE_ERROR_OUT_OF_MEMORY;
+        break;
+      }
+      arg->ctx = ctx;
+      arg->is_writer = (i % 2 == 0) ? 1 : 0;
+
+      err = syscore_thread_create(&ctx->threads[i], NULL, rwlock_exp_worker, arg);
+      if (err != SYSCORE_SUCCESS) {
+        free(arg);
+        break;
+      }
+      ctx->threads_created++;
+    }
+
+    if (err != SYSCORE_SUCCESS) {
+      ctx->stop_flag = 1;
+      for (size_t i = 0; i < ctx->threads_created; i++) {
+        syscore_sem_post(&ctx->sem_start);
+      }
+      for (size_t i = 0; i < ctx->threads_created; i++) {
+        syscore_thread_join(ctx->threads[i], NULL);
+      }
+      syscore_sem_destroy(&ctx->sem_start);
+      syscore_sem_destroy(&ctx->sem_done);
+      syscore_rwlock_destroy(&ctx->rwlock);
+      return err;
+    }
+  }
+
   return SYSCORE_SUCCESS;
 }
 
@@ -199,20 +401,12 @@ static syscore_error_t rwlock_exp_step(void *user_data) {
     ctx->counter++;
     syscore_rwlock_unlock(&ctx->rwlock);
   } else {
-    syscore_thread_t threads[8];
-    rwlock_worker_arg_t args[8];
-    ctx->ops_per_thread = 10;
-
     for (size_t i = 0; i < ctx->threads_count; i++) {
-      args[i].ctx = ctx;
-      args[i].is_writer = (i % 2 == 0) ? 1 : 0;
-      syscore_error_t err =
-          syscore_thread_create(&threads[i], NULL, rwlock_exp_worker, &args[i]);
-      if (err != SYSCORE_SUCCESS) return err;
+      syscore_sem_post(&ctx->sem_start);
     }
 
     for (size_t i = 0; i < ctx->threads_count; i++) {
-      syscore_thread_join(threads[i], NULL);
+      syscore_sem_wait(&ctx->sem_done);
     }
   }
 
@@ -222,6 +416,17 @@ static syscore_error_t rwlock_exp_step(void *user_data) {
 static void rwlock_exp_teardown(void *user_data) {
   rwlock_exp_ctx_t *ctx = (rwlock_exp_ctx_t *)user_data;
   if (ctx) {
+    if (ctx->threads_created > 0) {
+      ctx->stop_flag = 1;
+      for (size_t i = 0; i < ctx->threads_created; i++) {
+        syscore_sem_post(&ctx->sem_start);
+      }
+      for (size_t i = 0; i < ctx->threads_created; i++) {
+        syscore_thread_join(ctx->threads[i], NULL);
+      }
+      syscore_sem_destroy(&ctx->sem_start);
+      syscore_sem_destroy(&ctx->sem_done);
+    }
     syscore_rwlock_destroy(&ctx->rwlock);
   }
 }
@@ -231,17 +436,31 @@ static void rwlock_exp_teardown(void *user_data) {
 typedef struct {
   syscore_mutex_t mutex;
   syscore_cond_t cond;
+  syscore_sem_t sem_start;
+  syscore_sem_t sem_done;
+  syscore_thread_t threads[8];
   size_t threads_count;
+  size_t threads_created;
+  volatile int stop_flag;
   volatile int ready;
 } condvar_exp_ctx_t;
 
 static void *condvar_exp_worker(void *arg) {
   condvar_exp_ctx_t *ctx = (condvar_exp_ctx_t *)arg;
 
-  syscore_mutex_lock(&ctx->mutex);
-  ctx->ready = 1;
-  syscore_cond_signal(&ctx->cond);
-  syscore_mutex_unlock(&ctx->mutex);
+  while (1) {
+    syscore_error_t err = syscore_sem_wait(&ctx->sem_start);
+    if (err != SYSCORE_SUCCESS || ctx->stop_flag) {
+      break;
+    }
+
+    syscore_mutex_lock(&ctx->mutex);
+    ctx->ready = 1;
+    syscore_cond_signal(&ctx->cond);
+    syscore_mutex_unlock(&ctx->mutex);
+
+    syscore_sem_post(&ctx->sem_done);
+  }
 
   return NULL;
 }
@@ -260,6 +479,47 @@ static syscore_error_t condvar_exp_setup(void **user_data) {
   }
 
   ctx->ready = 0;
+  ctx->threads_created = 0;
+  ctx->stop_flag = 0;
+
+  if (ctx->threads_count > 1) {
+    err = syscore_sem_init(&ctx->sem_start, 0, 0);
+    if (err != SYSCORE_SUCCESS) {
+      syscore_cond_destroy(&ctx->cond);
+      syscore_mutex_destroy(&ctx->mutex);
+      return err;
+    }
+
+    err = syscore_sem_init(&ctx->sem_done, 0, 0);
+    if (err != SYSCORE_SUCCESS) {
+      syscore_sem_destroy(&ctx->sem_start);
+      syscore_cond_destroy(&ctx->cond);
+      syscore_mutex_destroy(&ctx->mutex);
+      return err;
+    }
+
+    for (size_t i = 0; i < ctx->threads_count; i++) {
+      err = syscore_thread_create(&ctx->threads[i], NULL, condvar_exp_worker, ctx);
+      if (err != SYSCORE_SUCCESS) break;
+      ctx->threads_created++;
+    }
+
+    if (err != SYSCORE_SUCCESS) {
+      ctx->stop_flag = 1;
+      for (size_t i = 0; i < ctx->threads_created; i++) {
+        syscore_sem_post(&ctx->sem_start);
+      }
+      for (size_t i = 0; i < ctx->threads_created; i++) {
+        syscore_thread_join(ctx->threads[i], NULL);
+      }
+      syscore_sem_destroy(&ctx->sem_start);
+      syscore_sem_destroy(&ctx->sem_done);
+      syscore_cond_destroy(&ctx->cond);
+      syscore_mutex_destroy(&ctx->mutex);
+      return err;
+    }
+  }
+
   return SYSCORE_SUCCESS;
 }
 
@@ -269,25 +529,14 @@ static syscore_error_t condvar_exp_step(void *user_data) {
   ctx->ready = 0;
 
   if (ctx->threads_count <= 1) {
-    syscore_thread_t worker;
-    syscore_error_t err =
-        syscore_thread_create(&worker, NULL, condvar_exp_worker, ctx);
-    if (err != SYSCORE_SUCCESS) return err;
-
     syscore_mutex_lock(&ctx->mutex);
-    while (!ctx->ready) {
-      syscore_cond_wait(&ctx->cond, &ctx->mutex);
-    }
+    ctx->ready = 1;
+    syscore_cond_signal(&ctx->cond);
     ctx->ready = 0;
     syscore_mutex_unlock(&ctx->mutex);
-
-    syscore_thread_join(worker, NULL);
   } else {
-    syscore_thread_t threads[8];
     for (size_t i = 0; i < ctx->threads_count; i++) {
-      syscore_error_t err =
-          syscore_thread_create(&threads[i], NULL, condvar_exp_worker, ctx);
-      if (err != SYSCORE_SUCCESS) return err;
+      syscore_sem_post(&ctx->sem_start);
     }
 
     syscore_mutex_lock(&ctx->mutex);
@@ -298,7 +547,7 @@ static syscore_error_t condvar_exp_step(void *user_data) {
     syscore_mutex_unlock(&ctx->mutex);
 
     for (size_t i = 0; i < ctx->threads_count; i++) {
-      syscore_thread_join(threads[i], NULL);
+      syscore_sem_wait(&ctx->sem_done);
     }
   }
 
@@ -308,6 +557,17 @@ static syscore_error_t condvar_exp_step(void *user_data) {
 static void condvar_exp_teardown(void *user_data) {
   condvar_exp_ctx_t *ctx = (condvar_exp_ctx_t *)user_data;
   if (ctx) {
+    if (ctx->threads_created > 0) {
+      ctx->stop_flag = 1;
+      for (size_t i = 0; i < ctx->threads_created; i++) {
+        syscore_sem_post(&ctx->sem_start);
+      }
+      for (size_t i = 0; i < ctx->threads_created; i++) {
+        syscore_thread_join(ctx->threads[i], NULL);
+      }
+      syscore_sem_destroy(&ctx->sem_start);
+      syscore_sem_destroy(&ctx->sem_done);
+    }
     syscore_cond_destroy(&ctx->cond);
     syscore_mutex_destroy(&ctx->mutex);
   }

@@ -49,17 +49,25 @@ def load_json_results(filepath):
         print(f"Error loading JSON file '{filepath}': {e}", file=sys.stderr)
         sys.exit(1)
 
+def resolve_baseline_path(requested_path):
+    if requested_path in ("auto", "benchmarks/baselines/baseline.json") or not os.path.exists(requested_path):
+        platform_name = "linux" if sys.platform.startswith("linux") else ("macos" if sys.platform == "darwin" else "baseline")
+        platform_baseline = f"benchmarks/baselines/{platform_name}.json"
+        if os.path.exists(platform_baseline):
+            return os.path.abspath(platform_baseline)
+    return os.path.abspath(requested_path)
+
 def main():
     parser = argparse.ArgumentParser(description="Compare SysCore Benchmark Results against Baseline")
     parser.add_argument("--current", default="build/results.json", help="Path to current benchmark results JSON (default: build/results.json)")
-    parser.add_argument("--baseline", default="benchmarks/baselines/baseline.json", help="Path to baseline benchmark JSON (default: benchmarks/baselines/baseline.json)")
+    parser.add_argument("--baseline", default="auto", help="Path to baseline benchmark JSON or 'auto' for platform detection (default: auto)")
     parser.add_argument("--threshold", type=float, default=25.0, help="Regression threshold percentage (default: 25.0)")
     parser.add_argument("--update-baseline", action="store_true", help="Update stored baseline file with current results")
 
     args = parser.parse_args()
 
     current_path = os.path.abspath(args.current)
-    baseline_path = os.path.abspath(args.baseline)
+    baseline_path = resolve_baseline_path(args.baseline)
 
     if args.update_baseline:
         if not os.path.exists(current_path):
@@ -85,6 +93,7 @@ def main():
     threshold = args.threshold
     pass_count = 0
     fail_count = 0
+    skip_count = 0
     eval_count = 0
 
     print("=" * 100)
@@ -99,6 +108,7 @@ def main():
     for name, base_item in baseline_data.items():
         if name not in current_data:
             print(f"{name:<45} {'All':<15} {'N/A':<12} {'Missing':<12} {'N/A':<10} {'SKIP':<6}")
+            skip_count += 1
             continue
 
         eval_count += 1
@@ -139,7 +149,7 @@ def main():
             print(f"{'':<45} {'Throughput':<15} {format_throughput(b_tp):<12} {format_throughput(c_tp):<12} {tp_change_str:<10} {tp_status:<6}")
 
     print("-" * 100)
-    print(f"Summary: {eval_count} benchmark configurations evaluated. Total checks: {pass_count + fail_count} ({pass_count} PASS, {fail_count} FAIL).")
+    print(f"Summary: {eval_count} benchmark configurations evaluated. Total checks: {pass_count + fail_count + skip_count} ({pass_count} PASS, {skip_count} SKIP, {fail_count} FAIL).")
     print(f"Overall Status: {'PASS' if fail_count == 0 else 'FAIL'}")
     print("=" * 100 + "\n")
 

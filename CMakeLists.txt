@@ -390,19 +390,23 @@ add_executable(ipc_pipe_bench benchmarks/ipc_pipe_bench.c)
 target_link_libraries(ipc_pipe_bench PRIVATE syscore_ipc syscore_benchmark)
 
 add_executable(ipc_shm_bench benchmarks/ipc_shm_bench.c)
-target_link_libraries(ipc_shm_bench PRIVATE syscore_memory syscore_sync syscore_threading syscore_benchmark)
+target_link_libraries(ipc_shm_bench PRIVATE syscore_memory syscore_semaphore syscore_sync syscore_threading syscore_benchmark)
 
 add_executable(ipc_mq_bench benchmarks/ipc_mq_bench.c)
 target_link_libraries(ipc_mq_bench PRIVATE syscore_mq syscore_benchmark)
 
 add_executable(sync_mutex_bench benchmarks/sync_mutex_bench.c)
-target_link_libraries(sync_mutex_bench PRIVATE syscore_sync syscore_threading syscore_benchmark)
+target_link_libraries(sync_mutex_bench PRIVATE syscore_sync syscore_semaphore syscore_threading syscore_benchmark)
 
 add_executable(sync_semaphore_bench benchmarks/sync_semaphore_bench.c)
 target_link_libraries(sync_semaphore_bench PRIVATE syscore_semaphore syscore_threading syscore_benchmark)
 
 add_executable(sync_rwlock_bench benchmarks/sync_rwlock_bench.c)
-target_link_libraries(sync_rwlock_bench PRIVATE syscore_sync syscore_threading syscore_benchmark)
+target_link_libraries(sync_rwlock_bench PRIVATE syscore_sync syscore_semaphore syscore_threading syscore_benchmark)
+
+add_executable(sync_condvar_bench benchmarks/sync_condvar_bench.c)
+target_link_libraries(sync_condvar_bench PRIVATE syscore_sync syscore_semaphore syscore_threading syscore_benchmark)
+
 
 # Phase 4 Performance Analysis Experiments
 add_executable(exp_ipc_comparison benchmarks/exp_ipc_comparison.c)

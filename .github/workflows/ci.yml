@@ -27,8 +27,7 @@ jobs:
         run: cd build && ctest --output-on-failure
 
       - name: Run Benchmarks
-        run: python3 scripts/run_benchmarks.py --build-dir build --output build/results.json
+        run: python3 scripts/run_benchmarks.py --build-dir build --output build/results.json --runs 5
 
       - name: Performance Regression Validation
-        run: python3 scripts/compare_benchmarks.py --current build/results.json --baseline benchmarks/baselines/baseline.json --threshold 50
-
+        run: python3 scripts/compare_benchmarks.py --current build/results.json --baseline benchmarks/baselines/${{ matrix.os == 'ubuntu-latest' && 'linux.json' || 'macos.json' }} --threshold 50

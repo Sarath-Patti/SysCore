@@ -1,4 +1,5 @@
 #include "benchmark/benchmark.h"
+#include "sync/semaphore.h"
 #include "sync/sync.h"
 #include "threading/threading.h"
 #include <stdio.h>
@@ -6,9 +7,14 @@
 
 typedef struct {
   syscore_rwlock_t rwlock;
+  syscore_sem_t sem_start;
+  syscore_sem_t sem_done;
+  syscore_thread_t threads[16];
   size_t reader_threads;
   size_t writer_threads;
+  size_t threads_created;
   size_t ops_per_thread;
+  volatile int stop_flag;
   volatile size_t shared_counter;
 } rwlock_bench_ctx_t;
 
@@ -20,19 +26,30 @@ typedef struct {
 static void *rwlock_worker_thread(void *arg) {
   rwlock_worker_arg_t *warg = (rwlock_worker_arg_t *)arg;
   rwlock_bench_ctx_t *ctx = warg->ctx;
+  int is_writer = warg->is_writer;
+  free(warg);
 
-  if (warg->is_writer) {
-    for (size_t i = 0; i < ctx->ops_per_thread; i++) {
-      syscore_rwlock_wrlock(&ctx->rwlock);
-      ctx->shared_counter++;
-      syscore_rwlock_unlock(&ctx->rwlock);
+  while (1) {
+    syscore_error_t err = syscore_sem_wait(&ctx->sem_start);
+    if (err != SYSCORE_SUCCESS || ctx->stop_flag) {
+      break;
     }
-  } else {
-    for (size_t i = 0; i < ctx->ops_per_thread; i++) {
-      syscore_rwlock_rdlock(&ctx->rwlock);
-      (void)ctx->shared_counter;
-      syscore_rwlock_unlock(&ctx->rwlock);
+
+    if (is_writer) {
+      for (size_t i = 0; i < ctx->ops_per_thread; i++) {
+        syscore_rwlock_wrlock(&ctx->rwlock);
+        ctx->shared_counter++;
+        syscore_rwlock_unlock(&ctx->rwlock);
+      }
+    } else {
+      for (size_t i = 0; i < ctx->ops_per_thread; i++) {
+        syscore_rwlock_rdlock(&ctx->rwlock);
+        (void)ctx->shared_counter;
+        syscore_rwlock_unlock(&ctx->rwlock);
+      }
     }
+
+    syscore_sem_post(&ctx->sem_done);
   }
 
   return NULL;
@@ -46,6 +63,79 @@ static syscore_error_t rwlock_bench_setup(void **user_data) {
   if (err != SYSCORE_SUCCESS) return err;
 
   ctx->shared_counter = 0;
+  ctx->threads_created = 0;
+  ctx->stop_flag = 0;
+
+  size_t total_threads = ctx->reader_threads + ctx->writer_threads;
+
+  if (total_threads > 1) {
+    err = syscore_sem_init(&ctx->sem_start, 0, 0);
+    if (err != SYSCORE_SUCCESS) {
+      syscore_rwlock_destroy(&ctx->rwlock);
+      return err;
+    }
+
+    err = syscore_sem_init(&ctx->sem_done, 0, 0);
+    if (err != SYSCORE_SUCCESS) {
+      syscore_sem_destroy(&ctx->sem_start);
+      syscore_rwlock_destroy(&ctx->rwlock);
+      return err;
+    }
+
+    ctx->ops_per_thread = 10;
+    size_t idx = 0;
+
+    for (size_t i = 0; i < ctx->reader_threads; i++, idx++) {
+      rwlock_worker_arg_t *arg = (rwlock_worker_arg_t *)malloc(sizeof(rwlock_worker_arg_t));
+      if (!arg) {
+        err = SYSCORE_ERROR_OUT_OF_MEMORY;
+        break;
+      }
+      arg->ctx = ctx;
+      arg->is_writer = 0;
+
+      err = syscore_thread_create(&ctx->threads[idx], NULL, rwlock_worker_thread, arg);
+      if (err != SYSCORE_SUCCESS) {
+        free(arg);
+        break;
+      }
+      ctx->threads_created++;
+    }
+
+    if (err == SYSCORE_SUCCESS) {
+      for (size_t i = 0; i < ctx->writer_threads; i++, idx++) {
+        rwlock_worker_arg_t *arg = (rwlock_worker_arg_t *)malloc(sizeof(rwlock_worker_arg_t));
+        if (!arg) {
+          err = SYSCORE_ERROR_OUT_OF_MEMORY;
+          break;
+        }
+        arg->ctx = ctx;
+        arg->is_writer = 1;
+
+        err = syscore_thread_create(&ctx->threads[idx], NULL, rwlock_worker_thread, arg);
+        if (err != SYSCORE_SUCCESS) {
+          free(arg);
+          break;
+        }
+        ctx->threads_created++;
+      }
+    }
+
+    if (err != SYSCORE_SUCCESS) {
+      ctx->stop_flag = 1;
+      for (size_t i = 0; i < ctx->threads_created; i++) {
+        syscore_sem_post(&ctx->sem_start);
+      }
+      for (size_t i = 0; i < ctx->threads_created; i++) {
+        syscore_thread_join(ctx->threads[i], NULL);
+      }
+      syscore_sem_destroy(&ctx->sem_start);
+      syscore_sem_destroy(&ctx->sem_done);
+      syscore_rwlock_destroy(&ctx->rwlock);
+      return err;
+    }
+  }
+
   return SYSCORE_SUCCESS;
 }
 
@@ -64,29 +154,12 @@ static syscore_error_t rwlock_bench_step(void *user_data) {
       syscore_rwlock_unlock(&ctx->rwlock);
     }
   } else {
-    syscore_thread_t threads[16];
-    rwlock_worker_arg_t args[16];
-    ctx->ops_per_thread = 10;
-
-    size_t idx = 0;
-    for (size_t i = 0; i < ctx->reader_threads; i++, idx++) {
-      args[idx].ctx = ctx;
-      args[idx].is_writer = 0;
-      syscore_error_t err =
-          syscore_thread_create(&threads[idx], NULL, rwlock_worker_thread, &args[idx]);
-      if (err != SYSCORE_SUCCESS) return err;
-    }
-
-    for (size_t i = 0; i < ctx->writer_threads; i++, idx++) {
-      args[idx].ctx = ctx;
-      args[idx].is_writer = 1;
-      syscore_error_t err =
-          syscore_thread_create(&threads[idx], NULL, rwlock_worker_thread, &args[idx]);
-      if (err != SYSCORE_SUCCESS) return err;
+    for (size_t i = 0; i < total_threads; i++) {
+      syscore_sem_post(&ctx->sem_start);
     }
 
     for (size_t i = 0; i < total_threads; i++) {
-      syscore_thread_join(threads[i], NULL);
+      syscore_sem_wait(&ctx->sem_done);
     }
   }
 
@@ -96,6 +169,17 @@ static syscore_error_t rwlock_bench_step(void *user_data) {
 static void rwlock_bench_teardown(void *user_data) {
   rwlock_bench_ctx_t *ctx = (rwlock_bench_ctx_t *)user_data;
   if (ctx) {
+    if (ctx->threads_created > 0) {
+      ctx->stop_flag = 1;
+      for (size_t i = 0; i < ctx->threads_created; i++) {
+        syscore_sem_post(&ctx->sem_start);
+      }
+      for (size_t i = 0; i < ctx->threads_created; i++) {
+        syscore_thread_join(ctx->threads[i], NULL);
+      }
+      syscore_sem_destroy(&ctx->sem_start);
+      syscore_sem_destroy(&ctx->sem_done);
+    }
     syscore_rwlock_destroy(&ctx->rwlock);
   }
 }

@@ -1,0 +1,43 @@
+name: Generate Official Linux Baseline
+
+on:
+  workflow_dispatch:
+
+jobs:
+  generate-baseline:
+    name: Generate Linux Baseline Candidate (ubuntu-latest)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Configure CMake
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Test
+        run: cd build && ctest --output-on-failure
+
+      - name: Run 3-Pass Benchmark Suite
+        run: python3 scripts/run_benchmarks.py --build-dir build --output build/linux-baseline.json --runs 3
+
+      - name: Verify 29 Benchmark Configurations
+        run: |
+          python3 -c "
+          import json, sys
+          with open('build/linux-baseline.json', 'r', encoding='utf-8') as f:
+              data = json.load(f)
+          count = len(data)
+          print(f'Generated baseline contains {count} benchmark configurations.')
+          if count != 29:
+              print(f'Error: Expected 29 benchmark configurations, found {count}.', file=sys.stderr)
+              sys.exit(1)
+          "
+
+      - name: Upload Linux Baseline Artifact Candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: official-ubuntu-latest-linux-baseline-candidate
+          path: build/linux-baseline.json
