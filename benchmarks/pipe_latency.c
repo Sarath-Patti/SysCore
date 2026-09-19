@@ -1,34 +1,56 @@
-#include "common/logging.h"
+#include "benchmark/benchmark.h"
 #include "ipc/ipc.h"
-#include <stdio.h>
-#include <time.h>
+#include <stdlib.h>
 
-#define ITERATIONS 10000
+typedef struct {
+  syscore_ipc_handle_t rd;
+  syscore_ipc_handle_t wr;
+} pipe_bench_ctx_t;
 
-int main(void) {
-  syscore_log_init(SYSCORE_LOG_INFO);
+static syscore_error_t pipe_setup(void **user_data) {
+  pipe_bench_ctx_t *ctx = (pipe_bench_ctx_t *)malloc(sizeof(pipe_bench_ctx_t));
+  if (!ctx) return SYSCORE_ERROR_OUT_OF_MEMORY;
 
-  syscore_ipc_handle_t rd, wr;
-  syscore_ipc_pipe_create(&rd, &wr);
-
-  struct timespec start, end;
-  clock_gettime(CLOCK_MONOTONIC, &start);
-
-  char val = 'x';
-  for (int i = 0; i < ITERATIONS; i++) {
-    size_t written = 0;
-    size_t read_bytes = 0;
-    syscore_ipc_write(wr, &val, 1, &written);
-    syscore_ipc_read(rd, &val, 1, &read_bytes);
+  syscore_error_t err = syscore_ipc_pipe_create(&ctx->rd, &ctx->wr);
+  if (err != SYSCORE_SUCCESS) {
+    free(ctx);
+    return err;
   }
 
-  clock_gettime(CLOCK_MONOTONIC, &end);
+  *user_data = ctx;
+  return SYSCORE_SUCCESS;
+}
 
-  double elapsed =
-      (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
-  printf("Pipe Round-Trip Latency: %.3f us\n", (elapsed / ITERATIONS) * 1e6);
+static syscore_error_t pipe_step(void *user_data) {
+  pipe_bench_ctx_t *ctx = (pipe_bench_ctx_t *)user_data;
+  char val = 'x';
+  size_t written = 0;
+  size_t read_bytes = 0;
 
-  syscore_ipc_close(rd);
-  syscore_ipc_close(wr);
-  return 0;
+  syscore_error_t err = syscore_ipc_write(ctx->wr, &val, 1, &written);
+  if (err != SYSCORE_SUCCESS) return err;
+
+  return syscore_ipc_read(ctx->rd, &val, 1, &read_bytes);
+}
+
+static void pipe_teardown(void *user_data) {
+  pipe_bench_ctx_t *ctx = (pipe_bench_ctx_t *)user_data;
+  if (ctx) {
+    syscore_ipc_close(ctx->rd);
+    syscore_ipc_close(ctx->wr);
+    free(ctx);
+  }
+}
+
+int main(void) {
+  syscore_benchmark_config_t config;
+  config.name = "Pipe Round-Trip Communication Latency";
+  config.warmup_iterations = 1000;
+  config.measured_iterations = 10000;
+  config.setup = pipe_setup;
+  config.step = pipe_step;
+  config.teardown = pipe_teardown;
+  config.user_data = NULL;
+
+  return (syscore_benchmark_run(&config, NULL) == SYSCORE_SUCCESS) ? 0 : 1;
 }

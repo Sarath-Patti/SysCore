@@ -1,32 +1,29 @@
-#include "common/logging.h"
+#include "benchmark/benchmark.h"
 #include "threading/threading.h"
-#include <stdio.h>
-#include <time.h>
-
-#define ITERATIONS 1000
+#include <stdlib.h>
 
 static void *dummy_thread_func(void *arg) {
-  (void)arg;
+  SYSCORE_UNUSED(arg);
   return NULL;
 }
 
+static syscore_error_t thread_step(void *user_data) {
+  SYSCORE_UNUSED(user_data);
+  syscore_thread_t thread;
+  syscore_error_t err = syscore_thread_create(&thread, NULL, dummy_thread_func, NULL);
+  if (err != SYSCORE_SUCCESS) return err;
+  return syscore_thread_join(thread, NULL);
+}
+
 int main(void) {
-  syscore_log_init(SYSCORE_LOG_INFO);
+  syscore_benchmark_config_t config;
+  config.name = "Thread Spawn/Join Latency";
+  config.warmup_iterations = 100;
+  config.measured_iterations = 1000;
+  config.setup = NULL;
+  config.step = thread_step;
+  config.teardown = NULL;
+  config.user_data = NULL;
 
-  struct timespec start, end;
-  clock_gettime(CLOCK_MONOTONIC, &start);
-
-  for (int i = 0; i < ITERATIONS; i++) {
-    syscore_thread_t thread;
-    syscore_thread_create(&thread, NULL, dummy_thread_func, NULL);
-    syscore_thread_join(thread, NULL);
-  }
-
-  clock_gettime(CLOCK_MONOTONIC, &end);
-
-  double elapsed =
-      (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
-  printf("Thread Spawn/Join Latency: %.3f us\n", (elapsed / ITERATIONS) * 1e6);
-
-  return 0;
+  return (syscore_benchmark_run(&config, NULL) == SYSCORE_SUCCESS) ? 0 : 1;
 }

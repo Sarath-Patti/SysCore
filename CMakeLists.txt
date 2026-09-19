@@ -248,6 +248,22 @@ add_executable(mmap_shared_demo
 )
 target_link_libraries(mmap_shared_demo PRIVATE syscore_mmap syscore_process)
 
+# Benchmark library target
+add_library(syscore_benchmark
+    src/benchmark/benchmark.c
+)
+
+target_include_directories(syscore_benchmark PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+)
+
+target_link_libraries(syscore_benchmark PUBLIC syscore_common)
+
+find_library(MATH_LIBRARY m)
+if(MATH_LIBRARY)
+    target_link_libraries(syscore_benchmark PUBLIC ${MATH_LIBRARY})
+endif()
+
 # List of all library targets for installation
 set(SYSCORE_LIBS
     syscore_common
@@ -259,6 +275,7 @@ set(SYSCORE_LIBS
     syscore_semaphore
     syscore_mq
     syscore_mmap
+    syscore_benchmark
 )
 
 # Apply INSTALL_INTERFACE to all library targets
@@ -345,18 +362,29 @@ add_executable(test_mmap tests/test_mmap.c)
 target_link_libraries(test_mmap PRIVATE syscore_mmap)
 add_test(NAME test_mmap COMMAND test_mmap)
 
-# Latency Benchmarks
-add_executable(thread_latency benchmarks/thread_latency.c)
-target_link_libraries(thread_latency PRIVATE syscore_threading)
+add_executable(test_benchmark tests/test_benchmark.c)
+target_link_libraries(test_benchmark PRIVATE syscore_benchmark)
+add_test(NAME test_benchmark COMMAND test_benchmark)
 
-add_executable(pipe_latency benchmarks/pipe_latency.c)
-target_link_libraries(pipe_latency PRIVATE syscore_ipc)
+# Latency Benchmarks
+add_executable(mutex_latency benchmarks/mutex_latency.c)
+target_link_libraries(mutex_latency PRIVATE syscore_sync syscore_benchmark)
 
 add_executable(semaphore_latency benchmarks/semaphore_latency.c)
-target_link_libraries(semaphore_latency PRIVATE syscore_semaphore)
+target_link_libraries(semaphore_latency PRIVATE syscore_semaphore syscore_benchmark)
+
+add_executable(thread_latency benchmarks/thread_latency.c)
+target_link_libraries(thread_latency PRIVATE syscore_threading syscore_benchmark)
+
+add_executable(pipe_latency benchmarks/pipe_latency.c)
+target_link_libraries(pipe_latency PRIVATE syscore_ipc syscore_benchmark)
+
+add_executable(shm_latency benchmarks/shm_latency.c)
+target_link_libraries(shm_latency PRIVATE syscore_memory syscore_benchmark)
 
 add_executable(mmap_latency benchmarks/mmap_latency.c)
-target_link_libraries(mmap_latency PRIVATE syscore_mmap)
+target_link_libraries(mmap_latency PRIVATE syscore_mmap syscore_benchmark)
+
 
 
 
